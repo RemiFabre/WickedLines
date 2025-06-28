@@ -85,17 +85,8 @@ The output is presented in three parts, using python wickedlines.py e4 e5 Nf3 Nc
 
 This table tracks the game's statistics move by move.
 
-      
-+---------+-----------+------------+---------+...
-|  Move   | Played by |   Games    | White % |...
-+---------+-----------+------------+---------+...
-| (start) |     -     | 2249986736 |  49.4   |...
-|   e4    |     W     | 1331478541 |  49.0   |...  |      100.00      |      59.31       |
-|   e5    |     B     | 464381379  |  50.9   |...  |      34.91       |      59.31       |
-|   ...   |    ...    |    ...     |   ...   |...
-+---------+-----------+------------+---------+...
-
-    
+![](20250628145915.png)
+   
 
 
     Played by: Who made the move to reach this state.
@@ -112,32 +103,16 @@ This table tracks the game's statistics move by move.
 
 2. Final Position Summary
 
-A snapshot of the final position in the sequence.
+A snapshot of the final position in the sequence. 
 
-```
-Final Position (FEN): r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3
-Move sequence: e4 e5 Nf3 Nc6 Bb5
-Turn to play: Black
-If White wants, this position will be reached 23.06% of the time.
-If Black wants, this position will be reached 10.07% of the time.
+![](20250628150038.png)
 
-Current Opening: Ruy Lopez (C60)
-```
-    
-
-This section presents the final reachability numbers in a clear sentence.
-1. Next Move Statistics
+3. Next Move Statistics
 
 This table shows the available moves from the final position.
 
       
-Next Move Statistics:
-+-----------------------+----------+...
-|         Move          |  Games   |...
-+-----------------------+----------+...
-|          d6           | 11410988 |... |   11.6    | +4.3  | ... Ruy Lopez: Steinitz Defense   |
-| f5 <-- Best for Black | 1473354  |... |   -6.4    | -13.7 | ... Ruy Lopez: Schliemann Defense  |
-+-----------------------+----------+...
+![](20250628150159.png)
 
     
     Move: The available moves. The statistically best option is annotated with <-- Best for....
