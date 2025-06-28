@@ -33,7 +33,32 @@ def print_stats(fen, data):
     print(f"\nPosition (FEN): {fen}\n")
     print(f"Current Opening: {data.get('opening', {}).get('name', 'Unknown')} ({data.get('opening', {}).get('eco', '-')})\n")
 
-    headers = ["Move", "Games", "White %", "Draw %", "Black %", "Avg Rating", "Opening"]
+    # -- Current state EV --
+    root_white = data.get("white", 0)
+    root_draws = data.get("draws", 0)
+    root_black = data.get("black", 0)
+    root_total = root_white + root_draws + root_black
+    root_ev = ((root_white - root_black) / root_total) if root_total else 0
+
+    # Print current node EV
+    print("Current Position Statistics:")
+    root_table = [[
+        "Root",
+        root_total,
+        f"{root_white / root_total * 100:.1f}" if root_total else "-",
+        f"{root_draws / root_total * 100:.1f}" if root_total else "-",
+        f"{root_black / root_total * 100:.1f}" if root_total else "-",
+        f"{root_ev * 100:.1f}"
+    ]]
+    print(tabulate(
+        root_table,
+        headers=["Node", "Games", "White %", "Draw %", "Black %", "EV (×100)"],
+        tablefmt="pretty"
+    ))
+    print()
+
+    # -- Next move stats --
+    headers = ["Move", "Games", "White %", "Draw %", "Black %", "EV (×100)", "ΔEV", "Avg Rating", "Opening"]
     rows = []
 
     for move in data.get("moves", []):
@@ -43,22 +68,31 @@ def print_stats(fen, data):
         total = white + draws + black
         if total == 0:
             continue
+
+        move_ev = (white - black) / total
+        delta_ev = (move_ev - root_ev) * 100
         opening_name = move["opening"]["name"] if move.get("opening") else "-"
+
         rows.append([
             move.get("san", "?"),
             total,
             f"{white / total * 100:.1f}",
             f"{draws / total * 100:.1f}",
             f"{black / total * 100:.1f}",
+            f"{move_ev * 100:.1f}",
+            f"{delta_ev:+.1f}",
             move.get("averageRating", "-"),
             opening_name
         ])
 
     if not rows:
-        print("No games found for this position.")
+        print("No moves found for this position.")
         return
 
+    print("Next Move Statistics:")
     print(tabulate(rows, headers=headers, tablefmt="pretty"))
+
+
 
 
 
