@@ -12,7 +12,16 @@ Top opportunities ranked by expected ELO gain over 100 games:
 
 ---
 
-## 2. ELO Gain/100: `+22.18` | Move: `f4`
+## 2. ELO Gain/100: `+22.63` | Move: `Bg5`
+- **Line:** `d4 d5 Bg5` (Queen's Pawn Game: Levitsky Attack)
+- **Reachable:** `45.75%`
+- **Impact:** Line EV: `+11.3`, ΔEV: `+6.2 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Bg5)**
+
+---
+
+## 3. ELO Gain/100: `+22.18` | Move: `f4`
 - **Line:** `e4 e5 f4` (King's Gambit)
 - **Reachable:** `42.84%`
 - **Impact:** Line EV: `+9.3`, ΔEV: `+6.5 (good for White)`
@@ -21,7 +30,7 @@ Top opportunities ranked by expected ELO gain over 100 games:
 
 ---
 
-## 3. ELO Gain/100: `+20.72` | Move: `d4`
+## 4. ELO Gain/100: `+20.72` | Move: `d4`
 - **Line:** `e4 e5 d4` (Center Game)
 - **Reachable:** `42.84%`
 - **Impact:** Line EV: `+8.9`, ΔEV: `+6.0 (good for White)`
@@ -30,7 +39,7 @@ Top opportunities ranked by expected ELO gain over 100 games:
 
 ---
 
-## 4. ELO Gain/100: `+19.18` | Move: `d5`
+## 5. ELO Gain/100: `+19.18` | Move: `d5`
 - **Line:** `e4 e5 Nf3 d5` (Elephant Gambit)
 - **Reachable:** `39.67%`
 - **Impact:** Line EV: `+0.3`, ΔEV: `-6.0 (good for Black)`
@@ -39,7 +48,7 @@ Top opportunities ranked by expected ELO gain over 100 games:
 
 ---
 
-## 5. ELO Gain/100: `+16.67` | Move: `f5`
+## 6. ELO Gain/100: `+16.67` | Move: `f5`
 - **Line:** `e4 e5 Nf3 f5` (Latvian Gambit)
 - **Reachable:** `39.67%`
 - **Impact:** Line EV: `+1.0`, ΔEV: `-5.3 (good for Black)`
@@ -48,380 +57,461 @@ Top opportunities ranked by expected ELO gain over 100 games:
 
 ---
 
-## 6. ELO Gain/100: `+15.50` | Move: `f5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 f5` (Italian Game: Rousseau Gambit)
-- **Reachable:** `17.09%`
-- **Impact:** Line EV: `-5.1`, ΔEV: `-11.3 (good for Black)`
+## 7. ELO Gain/100: `+14.14` | Move: `g3`
+- **Line:** `c4 e5 g3` (no name)
+- **Reachable:** `34.57%`
+- **Impact:** Line EV: `+11.1`, ΔEV: `+5.1 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20f5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20c4%20e5%202.%20g3)**
 
 ---
 
-## 7. ELO Gain/100: `+10.26` | Move: `Nd4`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Nd4` (Italian Game: Blackburne-Kostić Gambit)
-- **Reachable:** `17.09%`
-- **Impact:** Line EV: `-1.3`, ΔEV: `-7.5 (good for Black)`
+## 8. ELO Gain/100: `+10.86` | Move: `d4`
+- **Line:** `e4 e5 Bc4 Nf6 d4` (Bishop's Opening: Ponziani Gambit)
+- **Reachable:** `14.58%`
+- **Impact:** Line EV: `+15.0`, ΔEV: `+9.3 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Nd4)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Bc4%20Nf6%203.%20d4)**
 
 ---
 
-## 8. ELO Gain/100: `+7.82` | Move: `Be7`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Be7` (Italian Game: Hungarian Defense)
-- **Reachable:** `17.09%`
-- **Impact:** Line EV: `+0.5`, ΔEV: `-5.7 (good for Black)`
+## 9. ELO Gain/100: `+9.03` | Move: `c4`
+- **Line:** `d4 d5 Nf3 Nc6 c4` (no name)
+- **Reachable:** `9.81%`
+- **Impact:** Line EV: `+18.9`, ΔEV: `+11.5 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Be7)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Nf3%20Nc6%203.%20c4)**
 
 ---
 
-## 9. ELO Gain/100: `+3.57` | Move: `Qf6`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Qf6` (no name)
-- **Reachable:** `4.90%`
-- **Impact:** Line EV: `-6.1`, ΔEV: `-9.1 (good for Black)`
+## 10. ELO Gain/100: `+8.91` | Move: `Nf3`
+- **Line:** `d4 d5 c4 dxc4 Nf3` (Queen's Gambit Accepted: Normal Variation)
+- **Reachable:** `10.99%`
+- **Impact:** Line EV: `+19.9`, ΔEV: `+10.1 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Qf6)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20c4%20dxc4%203.%20Nf3)**
 
 ---
 
-## 10. ELO Gain/100: `+3.37` | Move: `Qe7`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Qe7` (Italian Game: Classical Variation, Closed Variation)
-- **Reachable:** `4.90%`
-- **Impact:** Line EV: `-5.6`, ΔEV: `-8.6 (good for Black)`
+## 11. ELO Gain/100: `+7.43` | Move: `d4`
+- **Line:** `e4 e5 Bc4 Bc5 d4` (Bishop's Opening: Lewis Gambit)
+- **Reachable:** `5.46%`
+- **Impact:** Line EV: `+22.7`, ΔEV: `+17.0 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Qe7)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Bc4%20Bc5%203.%20d4)**
 
 ---
 
-## 11. ELO Gain/100: `+2.30` | Move: `e5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 e5` (no name)
+## 12. ELO Gain/100: `+7.12` | Move: `e3`
+- **Line:** `d4 d5 c4 dxc4 e3` (Queen's Gambit Accepted: Old Variation)
+- **Reachable:** `10.99%`
+- **Impact:** Line EV: `+17.9`, ΔEV: `+8.1 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20c4%20dxc4%203.%20e3)**
+
+---
+
+## 13. ELO Gain/100: `+6.89` | Move: `c5`
+- **Line:** `d4 Nf6 c4 c5` (Benoni Defense)
+- **Reachable:** `10.62%`
+- **Impact:** Line EV: `-7.0`, ΔEV: `-8.1 (good for Black)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20Nf6%202.%20c4%20c5)**
+
+---
+
+## 14. ELO Gain/100: `+6.20` | Move: `Nc3`
+- **Line:** `d4 d5 Bf4 Nc6 Nc3` (no name)
+- **Reachable:** `10.32%`
+- **Impact:** Line EV: `+14.8`, ΔEV: `+7.5 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Bf4%20Nc6%203.%20Nc3)**
+
+---
+
+## 15. ELO Gain/100: `+6.11` | Move: `f5`
+- **Line:** `d4 e6 c4 f5` (Dutch Defense: Classical Variation)
+- **Reachable:** `9.12%`
+- **Impact:** Line EV: `-1.8`, ΔEV: `-8.4 (good for Black)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20e6%202.%20c4%20f5)**
+
+---
+
+## 16. ELO Gain/100: `+5.99` | Move: `g3`
+- **Line:** `e4 c5 Nc3 Nc6 g3` (Sicilian Defense: Closed, Fianchetto Variation)
+- **Reachable:** `8.63%`
+- **Impact:** Line EV: `+9.6`, ΔEV: `+8.7 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Nc3%20Nc6%203.%20g3)**
+
+---
+
+## 17. ELO Gain/100: `+5.67` | Move: `Qh5`
+- **Line:** `e4 e5 Bc4 Bc5 Qh5` (no name)
+- **Reachable:** `5.46%`
+- **Impact:** Line EV: `+18.7`, ΔEV: `+13.0 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Bc4%20Bc5%203.%20Qh5)**
+
+---
+
+## 18. ELO Gain/100: `+5.66` | Move: `Bg5`
+- **Line:** `d4 d5 Nf3 Nc6 Bg5` (no name)
+- **Reachable:** `9.81%`
+- **Impact:** Line EV: `+14.6`, ΔEV: `+7.2 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Nf3%20Nc6%203.%20Bg5)**
+
+---
+
+## 19. ELO Gain/100: `+5.58` | Move: `g3`
+- **Line:** `d4 d5 Nf3 Nc6 g3` (no name)
+- **Reachable:** `9.81%`
+- **Impact:** Line EV: `+14.5`, ΔEV: `+7.1 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Nf3%20Nc6%203.%20g3)**
+
+---
+
+## 20. ELO Gain/100: `+5.40` | Move: `Nge2`
+- **Line:** `e4 c5 Nc3 Nc6 Nge2` (Sicilian Defense: Closed, Chameleon Variation)
+- **Reachable:** `8.63%`
+- **Impact:** Line EV: `+8.8`, ΔEV: `+7.8 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Nc3%20Nc6%203.%20Nge2)**
+
+---
+
+## 21. ELO Gain/100: `+5.26` | Move: `b4`
+- **Line:** `e4 c5 Nf3 Nc6 b4` (Sicilian Defense: Portsmouth Gambit)
+- **Reachable:** `8.63%`
+- **Impact:** Line EV: `+7.8`, ΔEV: `+7.6 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Nf3%20Nc6%203.%20b4)**
+
+---
+
+## 22. ELO Gain/100: `+4.64` | Move: `g3`
+- **Line:** `d4 Nf6 c4 e6 g3` (Catalan Opening)
+- **Reachable:** `6.42%`
+- **Impact:** Line EV: `+10.3`, ΔEV: `+9.0 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20Nf6%202.%20c4%20e6%203.%20g3)**
+
+---
+
+## 23. ELO Gain/100: `+4.60` | Move: `Bf4`
+- **Line:** `d4 d5 Nf3 Nc6 Bf4` (no name)
+- **Reachable:** `9.81%`
+- **Impact:** Line EV: `+13.3`, ΔEV: `+5.9 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Nf3%20Nc6%203.%20Bf4)**
+
+---
+
+## 24. ELO Gain/100: `+4.56` | Move: `e6`
+- **Line:** `e4 c5 Bc4 e6` (no name)
+- **Reachable:** `7.27%`
+- **Impact:** Line EV: `-8.6`, ΔEV: `-7.8 (good for Black)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Bc4%20e6)**
+
+---
+
+## 25. ELO Gain/100: `+4.46` | Move: `Nc3`
+- **Line:** `d4 d5 c4 dxc4 Nc3` (no name)
+- **Reachable:** `10.99%`
+- **Impact:** Line EV: `+14.9`, ΔEV: `+5.1 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20c4%20dxc4%203.%20Nc3)**
+
+---
+
+## 26. ELO Gain/100: `+4.20` | Move: `g3`
+- **Line:** `e4 c5 Nc3 d6 g3` (no name)
+- **Reachable:** `4.81%`
+- **Impact:** Line EV: `+11.8`, ΔEV: `+10.9 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Nc3%20d6%203.%20g3)**
+
+---
+
+## 27. ELO Gain/100: `+3.83` | Move: `Nge2`
+- **Line:** `e4 c5 Nc3 d6 Nge2` (no name)
+- **Reachable:** `4.81%`
+- **Impact:** Line EV: `+10.9`, ΔEV: `+9.9 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Nc3%20d6%203.%20Nge2)**
+
+---
+
+## 28. ELO Gain/100: `+3.53` | Move: `Bg5`
+- **Line:** `d4 d5 Nf3 e6 Bg5` (no name)
+- **Reachable:** `7.73%`
+- **Impact:** Line EV: `+13.1`, ΔEV: `+5.7 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Nf3%20e6%203.%20Bg5)**
+
+---
+
+## 29. ELO Gain/100: `+3.37` | Move: `Nc3`
+- **Line:** `d4 Nf6 Bf4 g6 Nc3` (no name)
 - **Reachable:** `5.12%`
-- **Impact:** Line EV: `+17.0`, ΔEV: `+5.6 (good for White)`
+- **Impact:** Line EV: `+9.8`, ΔEV: `+8.2 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20e5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20Nf6%202.%20Bf4%20g6%203.%20Nc3)**
 
 ---
 
-## 12. ELO Gain/100: `+2.21` | Move: `Bxf7+`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 e5 Ng4 Bxf7+` (no name)
-- **Reachable:** `1.29%`
-- **Impact:** Line EV: `+38.4`, ΔEV: `+21.4 (good for White)`
+## 30. ELO Gain/100: `+3.35` | Move: `Nd2`
+- **Line:** `e4 e6 d4 d5 Nd2` (French Defense: Tarrasch Variation)
+- **Reachable:** `6.71%`
+- **Impact:** Line EV: `+8.1`, ΔEV: `+6.2 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20e5%20Ng4%207.%20Bxf7%2B)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20d4%20d5%203.%20Nd2)**
 
 ---
 
-## 13. ELO Gain/100: `+1.89` | Move: `Ng5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Nxc3 bxc3 Bxc3 Ng5` (no name)
-- **Reachable:** `0.85%`
-- **Impact:** Line EV: `+57.1`, ΔEV: `+27.7 (good for White)`
+## 31. ELO Gain/100: `+3.23` | Move: `f5`
+- **Line:** `e4 e5 Bc4 f5` (Bishop's Opening: Calabrese Countergambit)
+- **Reachable:** `7.02%`
+- **Impact:** Line EV: `+0.5`, ΔEV: `-5.8 (good for Black)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Nxc3%209.%20bxc3%20Bxc3%2010.%20Ng5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Bc4%20f5)**
 
 ---
 
-## 14. ELO Gain/100: `+1.64` | Move: `bxc3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Nxc3 bxc3` (no name)
-- **Reachable:** `1.16%`
-- **Impact:** Line EV: `+29.3`, ΔEV: `+17.6 (good for White)`
+## 32. ELO Gain/100: `+3.18` | Move: `Bg4`
+- **Line:** `d4 d5 Bf4 Bg4` (no name)
+- **Reachable:** `4.68%`
+- **Impact:** Line EV: `-0.7`, ΔEV: `-8.5 (good for Black)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Nxc3%209.%20bxc3)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Bf4%20Bg4)**
 
 ---
 
-## 15. ELO Gain/100: `+1.60` | Move: `Bxf7+`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Nxe4 Bxb4 Nxb4 Bxf7+` (no name)
-- **Reachable:** `1.16%`
-- **Impact:** Line EV: `+22.4`, ΔEV: `+17.2 (good for White)`
+## 33. ELO Gain/100: `+3.10` | Move: `f4`
+- **Line:** `e4 c5 Nc3 d6 f4` (no name)
+- **Reachable:** `4.81%`
+- **Impact:** Line EV: `+9.0`, ΔEV: `+8.0 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Bd2%20Nxe4%208.%20Bxb4%20Nxb4%209.%20Bxf7%2B)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Nc3%20d6%203.%20f4)**
 
 ---
 
-## 16. ELO Gain/100: `+1.48` | Move: `d5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Nxc3 bxc3 d5` (no name)
-- **Reachable:** `0.74%`
-- **Impact:** Line EV: `+1.7`, ΔEV: `-24.9 (good for Black)`
+## 34. ELO Gain/100: `+3.00` | Move: `Be3`
+- **Line:** `e4 e6 d4 d5 Be3` (French Defense: Alapin Gambit)
+- **Reachable:** `6.71%`
+- **Impact:** Line EV: `+7.5`, ΔEV: `+5.6 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Nxc3%209.%20bxc3%20d5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20d4%20d5%203.%20Be3)**
 
 ---
 
-## 17. ELO Gain/100: `+1.35` | Move: `Be7`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Nxc3 bxc3 Be7` (no name)
-- **Reachable:** `0.74%`
-- **Impact:** Line EV: `+3.9`, ΔEV: `-22.7 (good for Black)`
+## 35. ELO Gain/100: `+2.94` | Move: `Nc6`
+- **Line:** `e4 c5 Bc4 Nc6` (no name)
+- **Reachable:** `7.27%`
+- **Impact:** Line EV: `-5.8`, ΔEV: `-5.0 (good for Black)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Nxc3%209.%20bxc3%20Be7)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Bc4%20Nc6)**
 
 ---
 
-## 18. ELO Gain/100: `+1.27` | Move: `d5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 O-O d5` (no name)
-- **Reachable:** `1.07%`
-- **Impact:** Line EV: `+19.3`, ΔEV: `+14.8 (good for White)`
+## 36. ELO Gain/100: `+2.87` | Move: `c4`
+- **Line:** `d4 Nf6 Nf3 d5 c4` (no name)
+- **Reachable:** `5.01%`
+- **Impact:** Line EV: `+9.7`, ΔEV: `+7.2 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Bd2%20Bxd2%2B%208.%20Nbxd2%20O-O%209.%20d5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20Nf6%202.%20Nf3%20d5%203.%20c4)**
 
 ---
 
-## 19. ELO Gain/100: `+1.26` | Move: `cxd4`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 e5 Ng4 cxd4` (no name)
-- **Reachable:** `1.29%`
-- **Impact:** Line EV: `+29.2`, ΔEV: `+12.3 (good for White)`
+## 37. ELO Gain/100: `+2.76` | Move: `c5`
+- **Line:** `d4 Nf6 Bf4 c5` (no name)
+- **Reachable:** `4.17%`
+- **Impact:** Line EV: `-7.2`, ΔEV: `-8.3 (good for Black)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20e5%20Ng4%207.%20cxd4)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20Nf6%202.%20Bf4%20c5)**
 
 ---
 
-## 20. ELO Gain/100: `+1.19` | Move: `Qb3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Nxc3 bxc3 Bxc3 Qb3` (no name)
-- **Reachable:** `0.85%`
-- **Impact:** Line EV: `+46.7`, ΔEV: `+17.4 (good for White)`
+## 38. ELO Gain/100: `+2.53` | Move: `Ne2`
+- **Line:** `e4 c5 Bc4 d6 Ne2` (no name)
+- **Reachable:** `3.50%`
+- **Impact:** Line EV: `+3.0`, ΔEV: `+9.0 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Nxc3%209.%20bxc3%20Bxc3%2010.%20Qb3)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Bc4%20d6%203.%20Ne2)**
 
 ---
 
-## 21. ELO Gain/100: `+1.10` | Move: `Ba3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Nxc3 bxc3 Bxc3 Ba3` (Italian Game: Giuoco Piano, Aitken Variation)
-- **Reachable:** `0.85%`
-- **Impact:** Line EV: `+45.4`, ΔEV: `+16.0 (good for White)`
+## 39. ELO Gain/100: `+2.45` | Move: `f3`
+- **Line:** `d4 Nf6 c4 g6 f3` (Indian Defense: Anti-Grünfeld, Alekhine Variation)
+- **Reachable:** `5.98%`
+- **Impact:** Line EV: `+6.4`, ΔEV: `+5.1 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Nxc3%209.%20bxc3%20Bxc3%2010.%20Ba3)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20Nf6%202.%20c4%20g6%203.%20f3)**
 
 ---
 
-## 22. ELO Gain/100: `+1.06` | Move: `d5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb6 e5 d5` (no name)
-- **Reachable:** `0.77%`
-- **Impact:** Line EV: `-1.2`, ΔEV: `-17.3 (good for Black)`
+## 40. ELO Gain/100: `+2.30` | Move: `c5`
+- **Line:** `d4 d5 Bf4 c5` (Queen's Pawn Game: Accelerated London System, Steinitz Countergambit)
+- **Reachable:** `4.68%`
+- **Impact:** Line EV: `+1.6`, ΔEV: `-6.1 (good for Black)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb6%207.%20e5%20d5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20d5%202.%20Bf4%20c5)**
 
 ---
 
-## 23. ELO Gain/100: `+1.01` | Move: `Bb3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 O-O Bb3` (no name)
-- **Reachable:** `1.72%`
-- **Impact:** Line EV: `+13.8`, ΔEV: `+7.4 (good for White)`
+## 41. ELO Gain/100: `+2.30` | Move: `f4`
+- **Line:** `e4 c5 Bc4 d6 f4` (no name)
+- **Reachable:** `3.50%`
+- **Impact:** Line EV: `+2.2`, ΔEV: `+8.2 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d3%20O-O%206.%20Bb3)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Bc4%20d6%203.%20f4)**
 
 ---
 
-## 24. ELO Gain/100: `+1.00` | Move: `Bxf7+`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Nxe4 Bxf7+` (no name)
-- **Reachable:** `1.17%`
-- **Impact:** Line EV: `+13.7`, ΔEV: `+10.7 (good for White)`
+## 42. ELO Gain/100: `+2.28` | Move: `g3`
+- **Line:** `d4 Nf6 Nf3 d5 g3` (Queen's Pawn Game: Symmetrical Variation, Pseudo-Catalan)
+- **Reachable:** `5.01%`
+- **Impact:** Line EV: `+8.2`, ΔEV: `+5.7 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Bd2%20Nxe4%208.%20Bxf7%2B)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20Nf6%202.%20Nf3%20d5%203.%20g3)**
 
 ---
 
-## 25. ELO Gain/100: `+0.81` | Move: `a4`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 O-O a4` (no name)
-- **Reachable:** `1.72%`
-- **Impact:** Line EV: `+12.4`, ΔEV: `+5.9 (good for White)`
+## 43. ELO Gain/100: `+2.24` | Move: `f5`
+- **Line:** `d4 e6 Bf4 f5` (no name)
+- **Reachable:** `4.24%`
+- **Impact:** Line EV: `-0.0`, ΔEV: `-6.6 (good for Black)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d3%20O-O%206.%20a4)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20e6%202.%20Bf4%20f5)**
 
 ---
 
-## 26. ELO Gain/100: `+0.79` | Move: `h3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 d6 h3` (no name)
-- **Reachable:** `0.55%`
-- **Impact:** Line EV: `+22.7`, ΔEV: `+18.2 (good for White)`
+## 44. ELO Gain/100: `+2.20` | Move: `a3`
+- **Line:** `e4 c5 Bc4 d6 a3` (no name)
+- **Reachable:** `3.50%`
+- **Impact:** Line EV: `+1.8`, ΔEV: `+7.8 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Bd2%20Bxd2%2B%208.%20Nbxd2%20d6%209.%20h3)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Bc4%20d6%203.%20a3)**
 
 ---
 
-## 27. ELO Gain/100: `+0.76` | Move: `Nbd2`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 O-O Nbd2` (no name)
-- **Reachable:** `1.72%`
-- **Impact:** Line EV: `+12.0`, ΔEV: `+5.5 (good for White)`
+## 45. ELO Gain/100: `+2.17` | Move: `Nge2`
+- **Line:** `e4 c5 Nc3 e6 Nge2` (no name)
+- **Reachable:** `3.67%`
+- **Impact:** Line EV: `+8.3`, ΔEV: `+7.4 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d3%20O-O%206.%20Nbd2)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Nc3%20e6%203.%20Nge2)**
 
 ---
 
-## 28. ELO Gain/100: `+0.75` | Move: `Bb6`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 Bb6` (no name)
-- **Reachable:** `1.48%`
-- **Impact:** Line EV: `+1.4`, ΔEV: `-6.3 (good for Black)`
+## 46. ELO Gain/100: `+2.11` | Move: `g3`
+- **Line:** `e4 c5 Nc3 e6 g3` (Sicilian Defense: Closed)
+- **Reachable:** `3.67%`
+- **Impact:** Line EV: `+8.1`, ΔEV: `+7.2 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d3%20Bb6)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Nc3%20e6%203.%20g3)**
 
 ---
 
-## 29. ELO Gain/100: `+0.75` | Move: `Bxc3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Bxc3` (Italian Game: Classical Variation, Greco Gambit, Main Line)
-- **Reachable:** `0.81%`
-- **Impact:** Line EV: `-5.6`, ΔEV: `-11.4 (good for Black)`
+## 47. ELO Gain/100: `+2.04` | Move: `f5`
+- **Line:** `d4 e6 Nf3 f5` (no name)
+- **Reachable:** `3.68%`
+- **Impact:** Line EV: `-0.4`, ΔEV: `-6.9 (good for Black)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Bxc3)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20e6%202.%20Nf3%20f5)**
 
 ---
 
-## 30. ELO Gain/100: `+0.74` | Move: `Qb3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 d5 exd5 Nxd5 Qb3` (no name)
-- **Reachable:** `0.77%`
-- **Impact:** Line EV: `+6.2`, ΔEV: `+12.0 (good for White)`
+## 48. ELO Gain/100: `+1.94` | Move: `Nc3`
+- **Line:** `e4 c5 Bc4 d6 Nc3` (no name)
+- **Reachable:** `3.50%`
+- **Impact:** Line EV: `+0.9`, ΔEV: `+6.9 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Bd2%20Bxd2%2B%208.%20Nbxd2%20d5%209.%20exd5%20Nxd5%2010.%20Qb3)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Bc4%20d6%203.%20Nc3)**
 
 ---
 
-## 31. ELO Gain/100: `+0.71` | Move: `e5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb6 e5` (no name)
-- **Reachable:** `0.75%`
-- **Impact:** Line EV: `+20.2`, ΔEV: `+11.8 (good for White)`
+## 49. ELO Gain/100: `+1.85` | Move: `c5`
+- **Line:** `d4 Nf6 Nf3 c5` (Indian Defense: Spielmann-Indian)
+- **Reachable:** `3.95%`
+- **Impact:** Line EV: `-4.8`, ΔEV: `-5.8 (good for Black)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb6%207.%20e5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20d4%20Nf6%202.%20Nf3%20c5)**
 
 ---
 
-## 32. ELO Gain/100: `+0.67` | Move: `Bg5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 O-O Bg5` (no name)
-- **Reachable:** `0.64%`
-- **Impact:** Line EV: `+21.2`, ΔEV: `+13.1 (good for White)`
+## 50. ELO Gain/100: `+1.47` | Move: `d3`
+- **Line:** `e4 c5 Bc4 d6 d3` (no name)
+- **Reachable:** `3.50%`
+- **Impact:** Line EV: `-0.8`, ΔEV: `+5.3 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20O-O%208.%20Bg5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20c5%202.%20Bc4%20d6%203.%20d3)**
 
 ---
 
-## 33. ELO Gain/100: `+0.67` | Move: `d5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 e5 d5` (Italian Game: Classical Variation, Greco Gambit)
-- **Reachable:** `0.55%`
-- **Impact:** Line EV: `-4.8`, ΔEV: `-15.1 (good for Black)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20e5%20d5)**
-
----
-
-## 34. ELO Gain/100: `+0.65` | Move: `d5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Bxc3 bxc3 d5` (no name)
-- **Reachable:** `0.52%`
-- **Impact:** Line EV: `-21.2`, ΔEV: `-15.6 (good for Black)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Bxc3%209.%20bxc3%20d5)**
-
----
-
-## 35. ELO Gain/100: `+0.63` | Move: `O-O`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 e5 Ne4 O-O` (no name)
-- **Reachable:** `0.77%`
-- **Impact:** Line EV: `+27.2`, ΔEV: `+10.2 (good for White)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20e5%20Ne4%207.%20O-O)**
-
----
-
-## 36. ELO Gain/100: `+0.60` | Move: `d5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 d5` (no name)
-- **Reachable:** `0.73%`
-- **Impact:** Line EV: `-7.6`, ΔEV: `-10.3 (good for Black)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Bd2%20Bxd2%2B%208.%20Nbxd2%20d5)**
-
----
-
-## 37. ELO Gain/100: `+0.58` | Move: `Qe2`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 e5 Ne4 Qe2` (no name)
-- **Reachable:** `0.77%`
-- **Impact:** Line EV: `+26.5`, ΔEV: `+9.5 (good for White)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20e5%20Ne4%207.%20Qe2)**
-
----
-
-## 38. ELO Gain/100: `+0.57` | Move: `d5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 d5` (no name)
-- **Reachable:** `0.81%`
-- **Impact:** Line EV: `-3.1`, ΔEV: `-8.7 (good for Black)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Bd2%20d5)**
-
----
-
-## 39. ELO Gain/100: `+0.53` | Move: `Bd5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 e5 Ne4 Bd5` (no name)
-- **Reachable:** `0.77%`
-- **Impact:** Line EV: `+25.7`, ΔEV: `+8.7 (good for White)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20e5%20Ne4%207.%20Bd5)**
-
----
-
-## 40. ELO Gain/100: `+0.52` | Move: `Nc3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb6 Nc3` (no name)
-- **Reachable:** `0.75%`
-- **Impact:** Line EV: `+17.1`, ΔEV: `+8.7 (good for White)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb6%207.%20Nc3)**
-
----
-
-## 41. ELO Gain/100: `+0.47` | Move: `a4`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 O-O O-O d6 a4` (no name)
+## 51. ELO Gain/100: `+0.67` | Move: `Be2`
+- **Line:** `e4 e6 f4 b6 Be2` (no name)
 - **Reachable:** `0.62%`
-- **Impact:** Line EV: `+18.2`, ΔEV: `+9.4 (good for White)`
+- **Impact:** Line EV: `+13.7`, ΔEV: `+13.5 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d3%20O-O%206.%20O-O%20d6%207.%20a4)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20f4%20b6%203.%20Be2)**
 
 ---
 
-## 42. ELO Gain/100: `+0.46` | Move: `d5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb6 d5` (no name)
-- **Reachable:** `0.75%`
-- **Impact:** Line EV: `+16.0`, ΔEV: `+7.6 (good for White)`
+## 52. ELO Gain/100: `+0.42` | Move: `Nd2`
+- **Line:** `e4 e6 d4 c5 Nd2` (no name)
+- **Reachable:** `0.74%`
+- **Impact:** Line EV: `+9.0`, ΔEV: `+7.1 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb6%207.%20d5)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20d4%20c5%203.%20Nd2)**
 
 ---
 
-## 43. ELO Gain/100: `+0.39` | Move: `Bb6`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 O-O O-O Bb6` (no name)
-- **Reachable:** `0.61%`
-- **Impact:** Line EV: `-0.2`, ΔEV: `-8.0 (good for Black)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d3%20O-O%206.%20O-O%20Bb6)**
-
----
-
-## 44. ELO Gain/100: `+0.37` | Move: `Ba3`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Bxc3 bxc3 d5 Ba3` (Italian Game: Giuoco Piano, Steinitz Variation)
-- **Reachable:** `0.59%`
-- **Impact:** Line EV: `+0.3`, ΔEV: `+7.9 (good for White)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Bxc3%209.%20bxc3%20d5%2010.%20Ba3)**
-
----
-
-## 45. ELO Gain/100: `+0.33` | Move: `e5`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 O-O e5` (no name)
-- **Reachable:** `0.64%`
-- **Impact:** Line EV: `+14.6`, ΔEV: `+6.5 (good for White)`
-- **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20O-O%208.%20e5)**
-
----
-
-## 46. ELO Gain/100: `+0.32` | Move: `O-O`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 d6 O-O` (no name)
+## 53. ELO Gain/100: `+0.42` | Move: `Bd3`
+- **Line:** `e4 e6 d4 b6 Bd3` (no name)
 - **Reachable:** `0.55%`
-- **Impact:** Line EV: `+11.8`, ΔEV: `+7.2 (good for White)`
+- **Impact:** Line EV: `+11.3`, ΔEV: `+9.5 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Bd2%20Bxd2%2B%208.%20Nbxd2%20d6%209.%20O-O)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20d4%20b6%203.%20Bd3)**
 
 ---
 
-## 47. ELO Gain/100: `+0.28` | Move: `Qc2`
-- **Line:** `e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Nc3 Nxe4 O-O Bxc3 bxc3 d5 Qc2` (no name)
-- **Reachable:** `0.59%`
-- **Impact:** Line EV: `-1.7`, ΔEV: `+5.9 (good for White)`
+## 54. ELO Gain/100: `+0.36` | Move: `d5`
+- **Line:** `e4 e6 d4 c5 d5` (Benoni Defense: French Benoni)
+- **Reachable:** `0.74%`
+- **Impact:** Line EV: `+7.9`, ΔEV: `+6.1 (good for White)`
 - **Significance (p-value):** `<0.001`
-- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e5%202.%20Nf3%20Nc6%203.%20Bc4%20Bc5%204.%20c3%20Nf6%205.%20d4%20exd4%206.%20cxd4%20Bb4%2B%207.%20Nc3%20Nxe4%208.%20O-O%20Bxc3%209.%20bxc3%20d5%2010.%20Qc2)**
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20d4%20c5%203.%20d5)**
+
+---
+
+## 55. ELO Gain/100: `+0.29` | Move: `d4`
+- **Line:** `e4 e6 Nf3 b6 d4` (no name)
+- **Reachable:** `0.65%`
+- **Impact:** Line EV: `+4.1`, ΔEV: `+5.5 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20Nf3%20b6%203.%20d4)**
+
+---
+
+## 56. ELO Gain/100: `+0.28` | Move: `d4`
+- **Line:** `e4 e6 f4 b6 d4` (no name)
+- **Reachable:** `0.62%`
+- **Impact:** Line EV: `+5.9`, ΔEV: `+5.6 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20f4%20b6%203.%20d4)**
+
+---
+
+## 57. ELO Gain/100: `+0.28` | Move: `Nf3`
+- **Line:** `e4 e6 f4 b6 Nf3` (no name)
+- **Reachable:** `0.62%`
+- **Impact:** Line EV: `+5.9`, ΔEV: `+5.6 (good for White)`
+- **Significance (p-value):** `<0.001`
+- **[Analyze on Lichess](https://lichess.org/analysis/pgn/%5BEvent%20%22%3F%22%5D%0A%5BSite%20%22%3F%22%5D%0A%5BDate%20%22%3F%3F%3F%3F.%3F%3F.%3F%3F%22%5D%0A%5BRound%20%22%3F%22%5D%0A%5BWhite%20%22%3F%22%5D%0A%5BBlack%20%22%3F%22%5D%0A%5BResult%20%22%2A%22%5D%0A%0A1.%20e4%20e6%202.%20f4%20b6%203.%20Nf3)**
 
 ---
