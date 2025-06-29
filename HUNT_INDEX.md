@@ -2,6 +2,7 @@
 
 A collection of all opening opportunities discovered by the `hunt` command.
 
+- [Nf3](hunt_results/Nf3.md)
 - [c4](hunt_results/c4.md)
 - [d4](hunt_results/d4.md)
 - [e4](hunt_results/e4.md)
