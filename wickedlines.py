@@ -63,21 +63,29 @@ def calculate_p_value(move_stats, other_stats):
 
 # --- "Line" Mode Logic ---
 def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=None):
-    headers = ["Move", "Played by", "Games", "White %", "Draw %", "Black %", "EV (×100)", "Raw %", "Move %", "If White Wants %", "If Black Wants %"]
+    headers = ["Move", "Played by", "Games", "p-value", "EV (×100)", "Raw %", "Move %", "If White Wants %", "If Black Wants %"]
     rows, board, white_wants, black_wants = [], chess.Board(), 1.0, 1.0
     root_data = api_manager.query(board.fen(), speeds, ratings)
     if not root_data or "white" not in root_data: return 0,0,'W',[]
     root_total = sum(root_data.get(k,0) for k in ['white','draws','black'])
     if root_total == 0: return 0,0,'W',[]
     root_ev = (root_data.get('white',0) - root_data.get('black',0)) / root_total * 100 if root_total else 0
-    rows.append(["(start)", "-", f"{root_total:,}", f"{(root_data['white']/root_total*100):.1f}", f"{(root_data['draws']/root_total*100):.1f}", f"{(root_data['black']/root_total*100):.1f}", colorize_ev(root_ev), "100.00", "100.00", "100.00", "100.00"])
+    rows.append(["(start)", "-", f"{root_total:,}", "-", colorize_ev(root_ev), "100.00", "100.00", "100.00", "100.00"])
     prev_data = root_data
     for move_san in moves:
         played_by = "W" if board.turn == chess.WHITE else "B"
         move_data = next((m for m in prev_data.get("moves",[]) if m.get("san") == move_san), None)
         if not move_data: break
-        prev_total = sum(prev_data.get(k,0) for k in ['white','draws','black'])
-        move_total = sum(move_data.get(k,0) for k in ['white','draws','black'])
+        
+        w,d,b = move_data.get("white",0), move_data.get("draws",0), move_data.get("black",0)
+        parent_w, parent_d, parent_b = prev_data.get("white",0), prev_data.get("draws",0), prev_data.get("black",0)
+        other_stats = (parent_w-w, parent_d-d, parent_b-b)
+        p_value = calculate_p_value((w,d,b), other_stats)
+        if p_value < 0.001: p_str = colorize("<0.001", Colors.GREEN)
+        else: p_str = colorize(f"{p_value:.3f}", Colors.GREEN) if p_value < DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD else f"{p_value:.3f}"
+
+        prev_total = parent_w + parent_d + parent_b
+        move_total = w+d+b
         move_pct = move_total / prev_total if prev_total else 0
         if played_by == "W": black_wants *= move_pct
         else: white_wants *= move_pct
@@ -88,7 +96,7 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
         if total == 0: break
         ev = (current_data.get('white',0) - current_data.get('black',0)) / total * 100 if total else 0
         move_str = move_san + (colorize(" <-- Interesting", Colors.BLUE) if move_san == interesting_move_san else "")
-        rows.append([move_str, played_by, f"{total:,}", f"{(current_data['white']/total*100):.1f}", f"{(current_data['draws']/total*100):.1f}", f"{(current_data['black']/total*100):.1f}", colorize_ev(ev), f"{(total/root_total*100):.2f}", f"{move_pct*100:.2f}", f"{white_wants*100:.2f}", f"{black_wants*100:.2f}"])
+        rows.append([move_str, played_by, f"{total:,}", p_str, colorize_ev(ev), f"{(total/root_total*100):.2f}", f"{move_pct*100:.2f}", f"{white_wants*100:.2f}", f"{black_wants*100:.2f}"])
         prev_data = current_data
     print(tabulate(rows, headers=headers, tablefmt="pretty"))
     return white_wants*100, black_wants*100, "W" if board.turn == chess.WHITE else "B", moves
@@ -156,7 +164,7 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
         for move_data in sorted_moves:
             w,d,b = move_data.get("white",0), move_data.get("draws",0), move_data.get("black",0)
             move_total = w+d+b; other_stats = (parent_stats[0]-w, parent_stats[1]-d, parent_stats[2]-b)
-            if move_total == 0: continue
+            if move_total < config.MIN_GAMES: continue
             p_value = calculate_p_value((w,d,b), other_stats)
             if p_value >= config.P_VALUE_THRESHOLD: continue
             move_ev = (w-b)/move_total; delta_ev = (move_ev - pos_ev) * 100
@@ -167,7 +175,8 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
                     player_name = "WHITE" if is_white_turn else "BLACK"
                     elo_gain = reach_prob * abs(delta_ev) * config.ELO_PER_POINT
                     opening_name = (move_data.get("opening") or {}).get("name", "no name")
-                    report = {"line_moves": full_line_moves, "move": move_data['san'], "delta_ev": delta_ev, "p_value": p_value, "elo_gain": elo_gain, "opening_name": opening_name, "player": player_name, "reach_pct": reach_prob * 100}
+                    # FIX: Add line_ev to the report
+                    report = {"line_moves": full_line_moves, "move": move_data['san'], "line_ev": move_ev * 100, "delta_ev": delta_ev, "p_value": p_value, "elo_gain": elo_gain, "opening_name": opening_name, "player": player_name, "reach_pct": reach_prob * 100}
                     found_lines.append(report)
                     title = f" FOUND OPPORTUNITY FOR {player_name} #{found_count} | ΔEV: {delta_ev:+.1f} | ELO Gain/100: {elo_gain:+.2f} "
                     print(); print(colorize("\n" + title.center(85, "="), Colors.BLUE))
@@ -191,17 +200,18 @@ def print_final_summary():
         rank = i + 1
         p_str = colorize("<0.001", Colors.GREEN) if item['p_value'] < 0.001 else colorize(f"{item['p_value']:.3f}", Colors.GREEN)
         elo_gain_str = f"ELO Gain/100: {item['elo_gain']:>+5.2f}"
-        delta_ev_val = item['delta_ev']
         player_title = item['player'].title()
-        delta_ev_str = f"{colorize_ev(delta_ev_val)} (good for {player_title})"
         
-        # FIX: Added the "Reachable" percentage to the final summary
+        # FIX: Create a string for Line EV and Delta EV
+        line_ev_str = f"Line EV: {colorize_ev(item['line_ev'])}"
+        delta_ev_str = f"ΔEV: {colorize_ev(item['delta_ev'])} (good for {player_title})"
         reach_pct_str = f"Reachable: {item['reach_pct']:.2f}%"
 
         print(f"{rank}. {colorize(elo_gain_str, Colors.GREEN)} | "
               f"{colorize(reach_pct_str, Colors.YELLOW)} | "
-              f"Move: {colorize(item['move'], Colors.BLUE):<5} | "
-              f"ΔEV: {delta_ev_str}")
+              f"Move: {colorize(item['move'], Colors.BLUE):<5}")
+
+        print(f"   {line_ev_str:<25} | {delta_ev_str}")
               
         opening_str = f"({colorize(item['opening_name'], Colors.GRAY)})"
         print(f"   {colorize('Line:', Colors.GRAY)} {' '.join(item['line_moves'])} {opening_str}")
