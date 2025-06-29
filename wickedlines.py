@@ -10,8 +10,9 @@ import os
 import re
 from urllib.parse import quote
 from tabulate import tabulate
-from collections import namedtuple
+from collections import namedtuple, deque
 from scipy.stats import chi2_contingency
+from datetime import datetime
 
 # --- Configuration ---
 HunterConfig = namedtuple('HunterConfig', ['MIN_GAMES', 'MIN_REACH_PCT', 'DELTA_EV_THRESHOLD', 'P_VALUE_THRESHOLD', 'MAX_DEPTH', 'BRANCH_FACTOR', 'ELO_PER_POINT'])
@@ -70,12 +71,12 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
     headers = ["Move", "Played by", "Games", "p-value", "EV (×100)", "Raw %", "Move %", "If White Wants %", "If Black Wants %"]
     rows, board, white_wants, black_wants = [], chess.Board(), 1.0, 1.0
     root_data = api_manager.query(board.fen(), speeds, ratings)
-    if not root_data or "white" not in root_data: return 0,0,'W',[]
+    if not root_data or "white" not in root_data: return 0,0,'W',[], ""
     root_total = sum(root_data.get(k,0) for k in ['white','draws','black'])
-    if root_total == 0: return 0,0,'W',[]
+    if root_total == 0: return 0,0,'W',[], ""
     root_ev = (root_data.get('white',0) - root_data.get('black',0)) / root_total * 100 if root_total else 0
     rows.append(["(start)", "-", f"{root_total:,}", "-", colorize_ev(root_ev), "100.00", "100.00", "100.00", "100.00"])
-    prev_data = root_data
+    prev_data, line_name = root_data, (root_data.get("opening") or {}).get("name")
     for move_san in moves:
         played_by = "W" if board.turn == chess.WHITE else "B"
         move_data = next((m for m in prev_data.get("moves",[]) if m.get("san") == move_san), None)
@@ -99,8 +100,9 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
         move_str = move_san + (colorize(" <-- Interesting", Colors.BLUE) if move_san == interesting_move_san else "")
         rows.append([move_str, played_by, f"{total:,}", p_str, colorize_ev(ev), f"{(total/root_total*100):.2f}", f"{move_pct*100:.2f}", f"{white_wants*100:.2f}", f"{black_wants*100:.2f}"])
         prev_data = current_data
+        line_name = (current_data.get("opening") or {}).get("name")
     print(tabulate(rows, headers=headers, tablefmt="pretty"))
-    return white_wants*100, black_wants*100, "W" if board.turn == chess.WHITE else "B", moves
+    return white_wants*100, black_wants*100, "W" if board.turn == chess.WHITE else "B", moves, line_name
 
 def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val_thresh):
     player_str = "White" if turn == 'W' else "Black"
@@ -137,7 +139,6 @@ def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val
 
 # --- "Hunt" Mode Logic ---
 def find_interesting_lines_iterative(initial_board, initial_moves, start_white_prob, start_black_prob, speeds, ratings, config, max_finds):
-    # ... (This function remains correct and unchanged) ...
     stack = [(initial_board.fen(), initial_moves, None, start_white_prob, start_black_prob, len(initial_moves))]
     visited_nodes, found_count = 0, 0
     parent_board = chess.Board()
@@ -175,7 +176,7 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
                     player_name = "WHITE" if is_white_turn else "BLACK"
                     elo_gain = reach_prob * abs(delta_ev) * config.ELO_PER_POINT
                     opening_name = (move_data.get("opening") or {}).get("name", "no name")
-                    report = {"line_moves": full_line_moves, "move": move_data['san'], "line_ev": move_ev * 100, "delta_ev": delta_ev, "p_value": p_value, "elo_gain": elo_gain, "opening_name": opening_name, "player": player_name, "reach_pct": reach_prob * 100}
+                    report = {"line_moves": full_line_moves, "line_ev": move_ev * 100, "delta_ev": delta_ev, "p_value": p_value, "elo_gain": elo_gain, "opening_name": opening_name, "player": player_name, "reach_pct": reach_prob * 100}
                     found_lines.append(report)
                     title = f" FOUND OPPORTUNITY FOR {player_name} #{found_count} | ΔEV: {delta_ev:+.1f} | ELO Gain/100: {elo_gain:+.2f} "
                     print(); print(colorize("\n" + title.center(85, "="), Colors.BLUE))
@@ -190,81 +191,90 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
 
 # --- Main Execution & Signal Handling ---
 def update_hunt_index(results_dir="hunt_results"):
-    """Creates or updates an index file for all hunt reports."""
     index_path = "HUNT_INDEX.md"
     try:
         if not os.path.exists(results_dir): return
-        reports = sorted([f for f in os.listdir(results_dir) if f.endswith('.md')])
-        
+        dir_structure = {}
+        for root, dirs, files in os.walk(results_dir):
+            for file in files:
+                if file.endswith('.md'):
+                    rel_path = os.path.join(root, file)
+                    parts = rel_path.split(os.sep)
+                    if len(parts) >= 3:
+                        group_key = (parts[1], parts[2])
+                        if group_key not in dir_structure: dir_structure[group_key] = []
+                        line_name = file.replace("_", " ").replace(".md", "")
+                        if line_name == "start_pos": line_name = "From Starting Position"
+                        dir_structure[group_key].append((line_name, rel_path))
         with open(index_path, "w", encoding="utf-8") as f:
-            f.write("# WickedLines Hunt Results Index\n\n")
-            f.write("A collection of all opening opportunities discovered by the `hunt` command.\n\n")
-            if not reports:
-                f.write("*No reports found yet. Run a hunt to generate one!*")
+            f.write("# WickedLines Hunt Results Index\n\n"); f.write("A collection of all opening opportunities discovered by the `hunt` command, grouped by configuration.\n\n")
+            if not dir_structure: f.write("*No reports found yet. Run a hunt to generate one!*")
             else:
-                for report_file in reports:
-                    title = report_file.replace("_", " ").replace(".md", "")
-                    if title == "start_pos": title = "From Starting Position"
-                    f.write(f"- [{title}]({os.path.join(results_dir, report_file)})\n")
+                for (ratings, speeds), reports in sorted(dir_structure.items()):
+                    f.write(f"## Config: Ratings `{ratings}` | Speeds `{speeds}`\n\n")
+                    for line_name, report_path in sorted(reports):
+                        display_name = line_name
+                        f.write(f"- [{display_name}]({report_path})\n")
+                    f.write("\n")
         print(colorize(f"Updated master index file: {index_path}", Colors.YELLOW))
-    except Exception as e:
-        print(colorize(f"Could not update hunt index: {e}", Colors.RED))
+    except Exception as e: print(colorize(f"Could not update hunt index: {e}", Colors.RED))
 
-def print_final_summary(initial_moves):
+def print_final_summary(args, hunt_duration):
     if not found_lines: return
-    
-    # Generate content for both terminal and file
     terminal_output = [colorize("\n" + " Hunt Summary ".center(85, "-"), Colors.BLUE), "Top opportunities ranked by expected ELO gain over 100 games:\n"]
-    file_output = ["# WickedLines Hunt Report", f"### For initial line: `{' '.join(initial_moves) or '(start)'}`", "\nTop opportunities ranked by expected ELO gain over 100 games:\n"]
+    file_output = ["# WickedLines Hunt Report", f"### For initial line: `{' '.join(args.moves) or '(start)'}`"]
+    file_output.append(f"- **Date:** `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`")
+    file_output.append(f"- **Ratings:** `{args.ratings}` | **Speeds:** `{args.speeds}`")
+    file_output.append(f"- **Config:** Min Games=`{DEFAULT_HUNTER_CONFIG.MIN_GAMES}`, Max Depth=`{DEFAULT_HUNTER_CONFIG.MAX_DEPTH}`, etc.")
+    # FIX: Corrected the f-string syntax
+    file_output.append(f"- **Analysis Duration:** `{hunt_duration:.2f} seconds`")
+    file_output.append(f"- **API Calls:** `{api_manager.call_count}`")
+    file_output.append("\n---\n"); file_output.append("\nTop opportunities ranked by expected ELO gain over 100 games:\n")
     
     sorted_report = sorted(found_lines, key=lambda x: x['elo_gain'], reverse=True)
     for i, item in enumerate(sorted_report):
         rank = i + 1
-        p_str_color = colorize("<0.001", Colors.GREEN) if item['p_value'] < 0.001 else colorize(f"{item['p_value']:.3f}", Colors.GREEN)
-        p_str_plain = "<0.001" if item['p_value'] < 0.001 else f"{item['p_value']:.3f}"
+        p_str = "<0.001" if item['p_value'] < 0.001 else f"{item['p_value']:.3f}"
+        p_str_color = colorize(p_str, Colors.GREEN)
         elo_gain_str = f"ELO Gain/100: {item['elo_gain']:>+5.2f}"
-        delta_ev_val = item['delta_ev']
         player_title = item['player'].title()
-        delta_ev_str_color = f"{colorize_ev(delta_ev_val)} (good for {player_title})"
-        delta_ev_str_plain = f"{delta_ev_val:+.1f} (good for {player_title})"
+        delta_ev_str = f"{colorize_ev(item['delta_ev'])} (good for {player_title})"
+        delta_ev_str_plain = f"{item['delta_ev']:+.1f} (good for {player_title})"
         reach_pct_str = f"Reachable: {item['reach_pct']:.2f}%"
-        
-        # Terminal Output
-        terminal_output.append(f"{rank}. {colorize(elo_gain_str, Colors.GREEN)} | {colorize(reach_pct_str, Colors.YELLOW)} | Move: {colorize(item['move'], Colors.BLUE):<5}")
-        terminal_output.append(f"   Line EV: {colorize_ev(item['line_ev']):<20} | ΔEV: {delta_ev_str_color}")
+        line_str_color = colorize(' '.join(item['line_moves']), Colors.BLUE)
         opening_str = f"({colorize(item['opening_name'], Colors.GRAY)})"
-        terminal_output.append(f"   {colorize('Line:', Colors.GRAY)} {' '.join(item['line_moves'])} {opening_str}")
-        terminal_output.append(f"   {colorize('URL:', Colors.GRAY)}  {generate_lichess_url(item['line_moves'])}")
+        
+        terminal_output.append(f"{rank}. {colorize(elo_gain_str, Colors.GREEN)} | {colorize(reach_pct_str, Colors.YELLOW)}")
+        terminal_output.append(f"   Line: {line_str_color} {opening_str}")
+        terminal_output.append(f"   Impact: Line EV: {colorize_ev(item['line_ev']):<14} | ΔEV: {delta_ev_str}")
+        terminal_output.append(f"   URL:  {generate_lichess_url(item['line_moves'])}")
         terminal_output.append("")
         
-        # File Output (Markdown)
-        file_output.append(f"## {rank}. ELO Gain/100: `{item['elo_gain']:+.2f}` | Move: `{item['move']}`")
+        file_output.append(f"## {rank}. ELO Gain/100: `{item['elo_gain']:+.2f}`")
         file_output.append(f"- **Line:** `{' '.join(item['line_moves'])}` ({item['opening_name']})")
         file_output.append(f"- **Reachable:** `{item['reach_pct']:.2f}%`")
         file_output.append(f"- **Impact:** Line EV: `{item['line_ev']:+.1f}`, ΔEV: `{delta_ev_str_plain}`")
-        file_output.append(f"- **Significance (p-value):** `{p_str_plain}`")
+        file_output.append(f"- **Significance (p-value):** `{p_str}`")
         file_output.append(f"- **[Analyze on Lichess]({generate_lichess_url(item['line_moves'])})**")
         file_output.append("\n---\n")
 
-    # Print to terminal
     print("\n".join(terminal_output))
     
-    # Save to file
-    results_dir = "hunt_results"
-    filename = "_".join(initial_moves) + ".md" if initial_moves else "start_pos.md"
+    ratings_str = args.ratings.replace(",", "-"); speeds_str = args.speeds.replace(",", "-")
+    results_dir = os.path.join("hunt_results", ratings_str, speeds_str)
+    filename = "_".join(args.moves) + ".md" if args.moves else "start_pos.md"
     filepath = os.path.join(results_dir, filename)
     try:
         os.makedirs(results_dir, exist_ok=True)
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write("\n".join(file_output))
+        with open(filepath, "w", encoding="utf-8") as f: f.write("\n".join(file_output))
         print(colorize(f"Successfully saved hunt report to: {filepath}", Colors.YELLOW))
-        update_hunt_index(results_dir)
-    except Exception as e:
-        print(colorize(f"Error saving report to file: {e}", Colors.RED))
+        update_hunt_index()
+    except Exception as e: print(colorize(f"Error saving report to file: {e}", Colors.RED))
 
 def signal_handler(sig, frame):
     print(colorize("\n\nHunt interrupted by user.", Colors.YELLOW))
-    print_final_summary(interrupted_args)
+    interruption_duration = time.time() - hunt_start_time
+    print_final_summary(interrupted_args, interruption_duration)
     print(f"\nTotal API calls made during this session: {api_manager.call_count}")
     sys.exit(0)
 
@@ -272,33 +282,35 @@ def run_line_mode(args):
     print(colorize(f"\nAnalyzing line: {' '.join(args.moves) or '(start)'}", Colors.YELLOW))
     print(f"Speeds: {args.speeds} | Ratings: {args.ratings}")
     interesting_move = getattr(args, 'interesting_move_san', None)
-    white_reach, black_reach, _, _ = print_line_reachability_stats(args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move)
+    white_reach, black_reach, _, _, line_name = print_line_reachability_stats(args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move)
     final_fen, final_turn = get_fen_from_san_sequence(args.moves)
-    if not final_fen: return 1.0, 1.0 
+    if not final_fen: return 1.0, 1.0, ""
     data = api_manager.query(final_fen, args.speeds, args.ratings)
     if data: print(); print_move_stats(final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD)
-    return white_reach/100, black_reach/100 
+    return white_reach/100, black_reach/100, line_name
 
 def run_hunt_mode(args):
-    global found_lines, interrupted_args; found_lines, interrupted_args = [], args.moves
+    global found_lines, interrupted_args, hunt_start_time;
+    found_lines, interrupted_args, hunt_start_time = [], args, time.time()
     config = DEFAULT_HUNTER_CONFIG
     print("--- WickedLines Blunder Hunt ---")
     print(f"Config: Min Games={config.MIN_GAMES}, Min Reach%={config.MIN_REACH_PCT}, ΔEV>|{config.DELTA_EV_THRESHOLD}|, p<{config.P_VALUE_THRESHOLD}, Branch={config.BRANCH_FACTOR}, ELO Gain Factor={config.ELO_PER_POINT}")
     board, start_white_prob, start_black_prob = chess.Board(), 1.0, 1.0
     if args.moves:
-        start_white_prob, start_black_prob = run_line_mode(argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings))
+        start_white_prob, start_black_prob, _ = run_line_mode(argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings))
         for move in args.moves:
             try: board.push_san(move)
             except ValueError: return
     print(f"\n--- Starting Hunt from position: {' '.join(args.moves) or '(start)'} ---")
     find_interesting_lines_iterative(board, args.moves, start_white_prob, start_black_prob, args.speeds, args.ratings, config, args.max_finds)
+    hunt_duration = time.time() - hunt_start_time
     print(colorize("\n--- Hunt Complete ---", Colors.BLUE))
-    print_final_summary(args.moves)
+    print_final_summary(args, hunt_duration)
     print(f"Total API calls made: {api_manager.call_count} (many results were served from cache)")
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
-    interrupted_args = [] # Global for signal handler
+    interrupted_args = None; hunt_start_time = 0.0
     parser = argparse.ArgumentParser(description="WickedLines: Chess Opening Reachability & Value Explorer.")
     parser.add_argument("--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters")
     parser.add_argument("--ratings", default="1400,1600,1800", help="Comma-separated rating filters")
