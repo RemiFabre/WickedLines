@@ -1,16 +1,36 @@
 # WickedLines Hunt Results Index
 
-A collection of all opening opportunities discovered by the `hunt` command.
+A collection of all opening opportunities discovered by the `hunt` command, grouped by configuration.
 
-## Hunt Reports for: `e4 e5 Nf3 Nc6 Bb5 Ruy Lopez`
+## Config: Ratings `1400-1600-1800` | Speeds `blitz-rapid-classical`
 
-- **Ratings**: `1400,1600,1800` | **Speeds**: `blitz,rapid,classical` | **Config**: `MD=8` -> **[View Report](hunt_results/e4_e5_Nf3_Nc6_Bb5_Ruy_Lopez_ratings-1400-1600-1800_speeds-blitz-rapid-classical_MD-8_MG-1000_BF-4.md)**
+- [e4 e5 f4](hunt_results/1400-1600-1800/blitz-rapid-classical/e4_e5_f4.md)
 
-## Hunt Reports for: `e4 e5 f4 Kings Gambit`
+## Config: Ratings `1600` | Speeds `rapid`
 
-- **Ratings**: `1400,1600,1800` | **Speeds**: `blitz,rapid,classical` | **Config**: `MD=10` -> **[View Report](hunt_results/e4_e5_f4_Kings_Gambit_ratings-1400-1600-1800_speeds-blitz-rapid-classical_MD-10_MG-1000_BF-4.md)**
+- [From Starting Position](hunt_results/1600/rapid/start_pos.md)
 
-## Hunt Reports for: `start pos`
+## Config: Ratings `old` | Speeds `Nf3.md`
 
-- **Ratings**: `1400,1600,1800` | **Speeds**: `blitz,rapid,classical` | **Config**: `MD=5` -> **[View Report](hunt_results/start_pos_ratings-1400-1600-1800_speeds-blitz-rapid-classical_MD-5_MG-1000_BF-4.md)**
+- [Nf3](hunt_results/old/Nf3.md)
+
+## Config: Ratings `old` | Speeds `c4.md`
+
+- [c4](hunt_results/old/c4.md)
+
+## Config: Ratings `old` | Speeds `d4.md`
+
+- [d4](hunt_results/old/d4.md)
+
+## Config: Ratings `old` | Speeds `e4.md`
+
+- [e4](hunt_results/old/e4.md)
+
+## Config: Ratings `old` | Speeds `e4_e5_Nf3_Nc6_Bb5.md`
+
+- [e4 e5 Nf3 Nc6 Bb5](hunt_results/old/e4_e5_Nf3_Nc6_Bb5.md)
+
+## Config: Ratings `old` | Speeds `start_pos.md`
+
+- [From Starting Position](hunt_results/old/start_pos.md)
 
