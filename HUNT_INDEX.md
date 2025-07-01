@@ -12,6 +12,7 @@ A collection of all opening opportunities discovered by the `hunt` command.
 
 ## Hunt Reports for: `start pos`
 
+- **Ratings**: `2000,2200` | **Speeds**: `blitz` | **Config**: `MD=6` -> **[View Report](hunt_results/start_pos_ratings-2000-2200_speeds-blitz_MD-6_MG-1000_BF-4.md)**
 - **Ratings**: `1400,1600,1800` | **Speeds**: `blitz,rapid,classical` | **Config**: `MD=5` -> **[View Report](hunt_results/start_pos_ratings-1400-1600-1800_speeds-blitz-rapid-classical_MD-5_MG-1000_BF-4.md)**
 - **Ratings**: `1800` | **Speeds**: `rapid` | **Config**: `MD=10` -> **[View Report](hunt_results/start_pos_ratings-1800_speeds-rapid_MD-10_MG-1000_BF-4.md)**
 - **Ratings**: `1600` | **Speeds**: `rapid` | **Config**: `MD=10` -> **[View Report](hunt_results/start_pos_ratings-1600_speeds-rapid_MD-10_MG-1000_BF-4.md)**
