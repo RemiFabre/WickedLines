@@ -17,7 +17,6 @@ from datetime import datetime
 # --- Matplotlib Dependency ---
 try:
     import matplotlib.pyplot as plt
-    import matplotlib.font_manager as fm
 except ImportError:
     print("Matplotlib not found. Please install it with: pip install matplotlib")
     sys.exit(1)
@@ -26,6 +25,33 @@ except ImportError:
 HunterConfig = namedtuple('HunterConfig', ['MIN_GAMES', 'MIN_REACH_PCT', 'DELTA_EV_THRESHOLD', 'P_VALUE_THRESHOLD', 'MAX_DEPTH', 'BRANCH_FACTOR', 'ELO_PER_POINT'])
 DEFAULT_HUNTER_CONFIG = HunterConfig(MIN_GAMES=1000, MIN_REACH_PCT=1.0, DELTA_EV_THRESHOLD=5.0, P_VALUE_THRESHOLD=0.05, MAX_DEPTH=6, BRANCH_FACTOR=4, ELO_PER_POINT=8)
 PLOT_ELO_BRACKETS = ["400", "600", "800", "1000", "1200", "1400", "1600", "1800", "2000", "2200", "2500"]
+
+# Predefined list of openings for batch plotting
+BATCH_OPENINGS = [
+    # 1.e4 Openings
+    {'name': 'Sicilian Defense', 'moves': 'e4 c5'},
+    {'name': 'French Defense', 'moves': 'e4 e6'},
+    {'name': 'Caro-Kann Defense', 'moves': 'e4 c6'},
+    {'name': 'Scandinavian Defense', 'moves': 'e4 d5'},
+    {'name': "Alekhine's Defense", 'moves': 'e4 Nf6'},
+    {'name': 'Modern Defense', 'moves': 'e4 g6'},
+    {'name': 'Italian Game', 'moves': 'e4 e5 Nf3 Nc6 Bc4'},
+    {'name': 'Ruy López', 'moves': 'e4 e5 Nf3 Nc6 Bb5'},
+    {'name': 'Vienna Game', 'moves': 'e4 e5 Nc3'},
+    {'name': 'Philidor Defense', 'moves': 'e4 e5 Nf3 d6'},
+    {'name': 'Pirc Defense', 'moves': 'e4 d6 d4 Nf6 Nc3 g6'},
+    {'name': 'Scotch Game', 'moves': 'e4 e5 Nf3 Nc6 d4'},
+    # 1.d4 Openings
+    {'name': 'Dutch Defense', 'moves': 'd4 f5'},
+    {'name': "Queen's Gambit", 'moves': 'd4 d5 c4'},
+    {'name': "King's Indian Defense", 'moves': 'd4 Nf6 c4 g6'},
+    {'name': 'Slav Defense', 'moves': 'd4 d5 c4 c6'},
+    {'name': 'Nimzo-Indian Defense', 'moves': 'd4 Nf6 c4 e6 Nc3 Bb4'},
+    {'name': 'Grünfeld Defense', 'moves': 'd4 Nf6 c4 g6 Nc3 d5'},
+    # Other Openings
+    {'name': 'English Opening', 'moves': 'c4'},
+    {'name': 'Réti Opening', 'moves': 'Nf3 d5 c4'},
+]
 
 # --- Global State & Classes ---
 class Colors:
@@ -138,7 +164,8 @@ def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val
         w,d,b = move.get("white",0), move.get("draws",0), move.get("black",0)
         total = w+d+b; other_stats = (pos_w-w, pos_d-d, pos_b-b)
         if total == 0: continue
-        move_ev = (w-b)/total; delta_ev = (move_ev - pos_ev) * 100
+        move_ev = (w-b)/total if total > 0 else 0
+        delta_ev = (move_ev - pos_ev) * 100
         p_value = calculate_p_value((w,d,b), other_stats)
         if p_value < 0.001: p_str = colorize("<0.001", Colors.GREEN)
         else: p_str = colorize(f"{p_value:.3f}", Colors.GREEN) if p_value < p_val_thresh else f"{p_value:.3f}"
@@ -150,18 +177,37 @@ def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val
         rows.append([move_san_str, f"{total:,}", colorize_ev(move_ev*100), delta_ev_str, p_str, opening_name])
     print(f"Next Move Statistics for {player_str}:"); print(tabulate(rows, headers=headers, tablefmt="pretty"))
 
+def run_line_mode(args):
+    print(colorize(f"\nAnalyzing line: {' '.join(args.moves) or '(start)'}", Colors.YELLOW))
+    print(f"Speeds: {args.speeds} | Ratings: {args.ratings}")
+    interesting_move = getattr(args, 'interesting_move_san', None)
+    white_reach, black_reach, _, _, line_name = print_line_reachability_stats(args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move)
+    final_fen, final_turn = get_fen_from_san_sequence(args.moves)
+    if not final_fen: return 1.0, 1.0, ""
+    data = api_manager.query(final_fen, args.speeds, args.ratings)
+    if data:
+        print()
+        print_move_stats(final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD)
+    return white_reach/100, black_reach/100, line_name
+
 # --- "Hunt" Mode Logic ---
 def find_interesting_lines_iterative(initial_board, initial_moves, start_white_prob, start_black_prob, speeds, ratings, config, max_finds):
     stack = [(initial_board.fen(), initial_moves, None, start_white_prob, start_black_prob, len(initial_moves))]
     visited_nodes, found_count = 0, 0
     parent_board = chess.Board()
-    for move in initial_moves[:-1]: parent_board.push_san(move)
-    stack[0] = stack[0][:2] + (api_manager.query(parent_board.fen(), speeds, ratings),) + stack[0][3:]
+    if initial_moves:
+        for move in initial_moves[:-1]: parent_board.push_san(move)
+        stack[0] = stack[0][:2] + (api_manager.query(parent_board.fen(), speeds, ratings),) + stack[0][3:]
+    else:
+        stack[0] = stack[0][:2] + (api_manager.query(initial_board.fen(), speeds, ratings),) + stack[0][3:]
 
     while stack:
-        if max_finds and found_count >= max_finds: print(colorize(f"\nReached max finds limit ({max_finds}). Halting.", Colors.YELLOW)); break
+        if max_finds and found_count >= max_finds:
+            print(colorize(f"\nReached max finds limit ({max_finds}). Halting.", Colors.YELLOW))
+            break
         fen, move_history, prev_pos_data, white_prob, black_prob, depth = stack.pop()
-        board = chess.Board(fen); visited_nodes += 1
+        board = chess.Board(fen)
+        visited_nodes += 1
         indent = "  " * (depth - len(initial_moves))
         print(f"\r{indent}{colorize(f'[{visited_nodes: >3}|{len(stack): >3}]', Colors.GRAY)} Searching: {' '.join(move_history) or '(start)'}...", " " * 20, end="")
         current_data = api_manager.query(fen, speeds, ratings)
@@ -169,19 +215,22 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
         total_games = sum(current_data.get(k, 0) for k in ['white', 'draws', 'black'])
         is_white_turn = board.turn == chess.WHITE
         reach_prob = white_prob if is_white_turn else black_prob
-        if total_games < config.MIN_GAMES or depth >= config.MAX_DEPTH or reach_prob * 100 < config.MIN_REACH_PCT: continue
+        if total_games < config.MIN_GAMES or depth >= config.MAX_DEPTH or reach_prob * 100 < config.MIN_REACH_PCT:
+            continue
         prev_total = sum(prev_pos_data.get(k, 0) for k in ['white','draws','black'])
         if prev_total == 0: continue
-        pos_ev = (prev_pos_data.get('white',0) - prev_pos_data.get('black',0)) / prev_total
+        pos_ev = (prev_pos_data.get('white',0) - prev_pos_data.get('black',0)) / prev_total if prev_total > 0 else 0
         parent_stats = (prev_pos_data.get('white',0), prev_pos_data.get('draws',0), prev_pos_data.get('black',0))
         sorted_moves = sorted(current_data.get("moves",[]), key=lambda m: sum(m.get(k,0) for k in ['white','draws','black']), reverse=True)
         for move_data in sorted_moves:
             w,d,b = move_data.get("white",0), move_data.get("draws",0), move_data.get("black",0)
-            move_total = w+d+b; other_stats = (parent_stats[0]-w, parent_stats[1]-d, parent_stats[2]-b)
+            move_total = w+d+b
             if move_total < config.MIN_GAMES: continue
+            other_stats = (parent_stats[0]-w, parent_stats[1]-d, parent_stats[2]-b)
             p_value = calculate_p_value((w,d,b), other_stats)
             if p_value >= config.P_VALUE_THRESHOLD: continue
-            move_ev = (w-b)/move_total; delta_ev = (move_ev - pos_ev) * 100
+            move_ev = (w-b)/move_total if move_total > 0 else 0
+            delta_ev = (move_ev - pos_ev) * 100
             if abs(delta_ev) > config.DELTA_EV_THRESHOLD:
                 if (is_white_turn and delta_ev > 0) or (not is_white_turn and delta_ev < 0):
                     found_count += 1
@@ -192,26 +241,51 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
                     report = {"line_moves": full_line_moves, "line_ev": move_ev * 100, "delta_ev": delta_ev, "p_value": p_value, "elo_gain": elo_gain, "opening_name": opening_name, "player": player_name, "reach_pct": reach_prob * 100}
                     found_lines.append(report)
                     title = f" FOUND OPPORTUNITY FOR {player_name} #{found_count} | ΔEV: {delta_ev:+.1f} | ELO Gain/100: {elo_gain:+.2f} "
-                    print(); print(colorize("\n" + title.center(85, "="), Colors.BLUE))
+                    print()
+                    print(colorize("\n" + title.center(85, "="), Colors.BLUE))
                     run_line_mode(argparse.Namespace(moves=full_line_moves, speeds=speeds, ratings=ratings, interesting_move_san=move_data['san']))
                     print(colorize("="*85, Colors.BLUE) + "\n")
-        for i, move_to_explore in enumerate(reversed(sorted_moves[:config.BRANCH_FACTOR])):
-            new_board, move_san = board.copy(), move_to_explore['san']
-            new_board.push_san(move_san)
+        for move_to_explore in reversed(sorted_moves[:config.BRANCH_FACTOR]):
+            new_board = board.copy()
+            new_board.push_san(move_to_explore['san'])
             move_pct = sum(move_to_explore.get(k,0) for k in ['white','draws','black']) / total_games if total_games else 0
             new_white_prob, new_black_prob = (white_prob, black_prob * move_pct) if is_white_turn else (white_prob * move_pct, black_prob)
-            stack.append((new_board.fen(), move_history + [move_san], current_data, new_white_prob, new_black_prob, depth + 1))
+            stack.append((new_board.fen(), move_history + [move_to_explore['san']], current_data, new_white_prob, new_black_prob, depth + 1))
 
+def run_hunt_mode(args):
+    global found_lines, interrupted_args, hunt_start_time, interrupted_line_name
+    found_lines, interrupted_args = [], args
+    config = DEFAULT_HUNTER_CONFIG
+    hunt_start_time = time.time()
+    print("--- WickedLines Blunder Hunt ---")
+    print(f"Config: Min Games={config.MIN_GAMES}, Min Reach%={config.MIN_REACH_PCT}, ΔEV>|{config.DELTA_EV_THRESHOLD}|, p<{config.P_VALUE_THRESHOLD}, Branch={config.BRANCH_FACTOR}, ELO Gain Factor={config.ELO_PER_POINT}")
+    board, start_white_prob, start_black_prob, line_name = chess.Board(), 1.0, 1.0, ""
+    if args.moves:
+        start_white_prob, start_black_prob, line_name = run_line_mode(argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings))
+        for move in args.moves:
+            try: board.push_san(move)
+            except ValueError: return
+    interrupted_line_name = line_name
+    print(f"\n--- Starting Hunt from position: {' '.join(args.moves) or '(start)'} ---")
+    find_interesting_lines_iterative(board, args.moves, start_white_prob, start_black_prob, args.speeds, args.ratings, config, args.max_finds)
+    hunt_duration = time.time() - hunt_start_time
+    print(colorize("\n--- Hunt Complete ---", Colors.BLUE))
+    if found_lines:
+        print_final_summary(args, config, hunt_duration, line_name)
+    print(f"Total API calls made: {api_manager.call_count} (many results were served from cache)")
 
-# --- "Plot" Mode Logic ---
+# --- "Plot" and "Batch Plot" Mode Logic ---
 def get_stats_for_line(moves, speed, rating_bracket):
     board = chess.Board()
     white_wants, black_wants = 1.0, 1.0
     line_name = "N/A"
     root_data = api_manager.query(board.fen(), speed, rating_bracket)
-    if not root_data: return 0, 0, 0, "API Error", "White"
+    if not root_data: return 0, 0, 0, 0, "API Error", "White"
     root_total_games = sum(root_data.get(k, 0) for k in ['white', 'draws', 'black'])
     if root_total_games == 0: root_total_games = 1
+    
+    root_ev = (root_data.get('white', 0) - root_data.get('black', 0)) / root_total_games * 100 if root_total_games > 0 else 0
+
     prev_data = root_data
     for move_san in moves:
         played_by = "W" if board.turn == chess.WHITE else "B"
@@ -231,95 +305,100 @@ def get_stats_for_line(moves, speed, rating_bracket):
     forcing_player = "White" if is_last_move_by_white else "Black"
     reachability = white_wants if forcing_player == "White" else black_wants
     final_data = prev_data
-    if not final_data: return 0, 0, 0, line_name, forcing_player
+    if not final_data: return 0, 0, 0, root_ev, line_name, forcing_player
     final_pos_total_games = sum(final_data.get(k, 0) for k in ['white', 'draws', 'black'])
     popularity = final_pos_total_games / root_total_games if root_total_games > 0 else 0
     if final_pos_total_games == 0:
-        return 0, reachability * 100, popularity * 100, line_name, forcing_player
-    ev = (final_data.get('white', 0) - final_data.get('black', 0)) / final_pos_total_games * 100
-    return ev, reachability * 100, popularity * 100, line_name, forcing_player
+        return 0, reachability * 100, popularity * 100, root_ev, line_name, forcing_player
+    ev = (final_data.get('white', 0) - final_data.get('black', 0)) / final_pos_total_games * 100 if final_pos_total_games > 0 else 0
+    return ev, reachability * 100, popularity * 100, root_ev, line_name, forcing_player
 
-def run_plot_mode(args):
-    print(colorize(f"\nGenerating plot for line: {' '.join(args.moves)}", Colors.YELLOW))
-    print(f"Fixed Time Control: {args.speed}")
-    print("Querying Lichess database for ELO brackets. This may take a moment...")
+def run_plot_mode(args, show_plot=True):
+    if show_plot:
+        print(colorize(f"\nGenerating plot for line: {' '.join(args.moves)}", Colors.YELLOW))
+        print(f"Fixed Time Control: {args.speed}")
+        print("Querying Lichess database for ELO brackets. This may take a moment...")
 
-    player_advantage_values, reachability_values, popularity_values = [], [], []
+    player_advantage_values, baseline_advantage_values, reachability_values, popularity_values = [], [], [], []
     final_line_name = "Unknown Opening"
     forcing_player = "White"
     numeric_elo_ratings = [int(r.replace('2500', '2600')) for r in PLOT_ELO_BRACKETS]
 
     for i, rating in enumerate(PLOT_ELO_BRACKETS):
-        ev, reach, pop, line_name, player = get_stats_for_line(args.moves, args.speed, rating)
+        ev, reach, pop, root_ev, line_name, player = get_stats_for_line(args.moves, args.speed, rating)
         
-        # [NEW] Calculate Player's Advantage
         player_advantage = ev if player == 'White' else ev * -1
+        baseline_advantage = root_ev if player == 'White' else root_ev * -1
         
         player_advantage_values.append(player_advantage)
+        baseline_advantage_values.append(baseline_advantage)
         reachability_values.append(reach)
         popularity_values.append(pop)
         if line_name != "Unknown Opening": final_line_name = line_name
         forcing_player = player
-        print(f"  ({i+1}/{len(PLOT_ELO_BRACKETS)}) Processed {rating} ELO... Player Advantage: {player_advantage:+.1f}, Reachability: {reach:.2f}%, Popularity: {pop:.2f}%")
+        if show_plot:
+            print(f"  ({i+1}/{len(PLOT_ELO_BRACKETS)}) Processed {rating} ELO... Player Advantage: {player_advantage:+.1f}, Reachability: {reach:.2f}%, Popularity: {pop:.2f}%")
 
-    print(colorize("\nData collection complete. Generating final plot...", Colors.GREEN))
+    if show_plot:
+        print(colorize("\nData collection complete. Generating final plot...", Colors.GREEN))
 
     plt.style.use('seaborn-v0_8-whitegrid')
-    fig, (ax1, ax3) = plt.subplots(
-        nrows=2, ncols=1, figsize=(15, 12), sharex=True,
-        gridspec_kw={'height_ratios': [3, 1], 'hspace': 0.1}
+    fig, (ax1, ax2, ax3) = plt.subplots(
+        nrows=3, ncols=1, figsize=(15, 12), sharex=True,
+        gridspec_kw={'height_ratios': [3, 1, 1], 'hspace': 0.15}
     )
     fig.set_facecolor('white')
 
-    color_adv = '#0057b8' # Blue for advantage
+    color_adv = '#0057b8'
     color_reach = '#e34234'
     color_pop = '#9467bd'
+    color_base = '#555555'
 
-    # --- Top Plot: Player's Advantage vs. Reachability ---
+    # Top Plot: Player's Advantage & Baseline
     ax1.set_ylabel("Player's Advantage", color=color_adv, fontsize=14, weight='bold')
-    ax1.plot(numeric_elo_ratings, player_advantage_values, 'o-', color=color_adv, label="Player's Advantage", markersize=7, linewidth=2.5)
+    p1, = ax1.plot(numeric_elo_ratings, player_advantage_values, 'o-', color=color_adv, label="Player's Advantage", markersize=7, linewidth=2.5)
+    p2, = ax1.plot(numeric_elo_ratings, baseline_advantage_values, linestyle='-.', color=color_base, label=f"Average {forcing_player} advantage", linewidth=1.5)
     ax1.tick_params(axis='y', labelcolor=color_adv, labelsize=11)
     ax1.axhline(0, color='black', linestyle='--', linewidth=1.0, alpha=0.7)
     ax1.grid(True, which='major', axis='y', linestyle=':', linewidth=0.7)
     ax1.grid(True, which='major', axis='x', linestyle=':', linewidth=0.7)
 
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('Reachability %', color=color_reach, fontsize=14, weight='bold')
-    ax2.plot(numeric_elo_ratings, reachability_values, 's--', color=color_reach, label=f'Reachability % (If {forcing_player} Wants)', markersize=6, linewidth=2.0)
+    # Middle Plot: Reachability
+    ax2.set_ylabel('Reachability %', color=color_reach, fontsize=12, weight='bold')
+    p3, = ax2.plot(numeric_elo_ratings, reachability_values, 's--', color=color_reach, label=f'Reachability % (If {forcing_player} Wants)', markersize=6, linewidth=2.0)
     ax2.tick_params(axis='y', labelcolor=color_reach, labelsize=11)
-    ax2.set_ylim(bottom=0, top=101)
-    ax2.grid(False)
+    ax2.set_ylim(bottom=0)
+    ax2.grid(True, which='major', axis='both', linestyle=':', linewidth=0.7)
 
-    # --- Bottom Plot: Popularity ---
+    # Bottom Plot: Popularity
     ax3.set_ylabel('Popularity %', color=color_pop, fontsize=12, weight='bold')
-    ax3.plot(numeric_elo_ratings, popularity_values, 'd:', color=color_pop, label='Popularity % (Raw)', markersize=6, linewidth=2.0)
+    p4, = ax3.plot(numeric_elo_ratings, popularity_values, 'd:', color=color_pop, label='Popularity % (Raw)', markersize=6, linewidth=2.0)
     ax3.tick_params(axis='y', labelcolor=color_pop, labelsize=11)
     ax3.set_ylim(bottom=0)
     ax3.grid(True, which='major', axis='both', linestyle=':', linewidth=0.7)
 
-    # --- Shared X-Axis Configuration ---
     ax3.set_xlabel('ELO Rating Bracket', fontsize=12, labelpad=10)
     plt.xticks(numeric_elo_ratings, labels=PLOT_ELO_BRACKETS, rotation=30, ha='right')
 
-    # --- Titles, Legend, and Text ---
+    # Titles, Legend, and Text
     line_str = ' '.join(args.moves)
     title_opening_name = f"({final_line_name})" if final_line_name not in ["Unknown Opening", "N/A"] else ""
     fig.suptitle(f"Performance Analysis for: {line_str} {title_opening_name}", fontsize=20, weight='bold', y=0.98)
     ax1.set_title(f"Based on Lichess {args.speed.title()} Games", fontsize=14, pad=10)
 
-    handles1, labels1 = ax1.get_legend_handles_labels()
-    handles2, labels2 = ax2.get_legend_handles_labels()
-    handles3, labels3 = ax3.get_legend_handles_labels()
-    fig.legend(handles1 + handles2 + handles3, labels1 + labels2 + labels3,
-               loc='lower center', bbox_to_anchor=(0.5, 0.25), ncol=3, fontsize=12, frameon=True, shadow=True)
+    handles = [p1, p2, p3, p4]
+    labels = [h.get_label() for h in handles]
+    fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.28), ncol=2, fontsize=12, frameon=True, shadow=True)
 
-    fig.subplots_adjust(bottom=0.35, top=0.92, left=0.08, right=0.92)
-    adv_expl = f"Player's Advantage: The statistical score from the perspective of {forcing_player}. Positive is always good."
+    fig.subplots_adjust(bottom=0.4, top=0.92, left=0.08, right=0.92)
+    adv_expl = f"Player's Advantage: The statistical score from the perspective of {forcing_player}. Positive is always good for them."
+    base_expl = f"Average {forcing_player} advantage: The average starting advantage for that player in any game in that ELO bracket."
     reach_expl = f"Reachability %: Chance to reach this position if {forcing_player} actively tries to play this line."
     pop_expl = "Popularity %: Raw percentage of all games that follow this exact sequence of moves."
 
-    fig.text(0.5, 0.12, adv_expl, ha='center', va='bottom', fontsize=11)
-    fig.text(0.5, 0.07, reach_expl, ha='center', va='bottom', fontsize=11)
+    fig.text(0.5, 0.14, adv_expl, ha='center', va='bottom', fontsize=11)
+    fig.text(0.5, 0.10, base_expl, ha='center', va='bottom', fontsize=11)
+    fig.text(0.5, 0.06, reach_expl, ha='center', va='bottom', fontsize=11)
     fig.text(0.5, 0.02, pop_expl, ha='center', va='bottom', fontsize=11)
 
     plots_dir = "plots"
@@ -327,11 +406,32 @@ def run_plot_mode(args):
     filename = f"{'_'.join(args.moves).replace(' ', '_')}_{args.speed}.png"
     filepath = os.path.join(plots_dir, filename)
     plt.savefig(filepath, dpi=150)
-    print(colorize(f"Plot saved to: {filepath}", Colors.YELLOW))
+    
+    if show_plot:
+        plt.show()
+    else:
+        plt.close(fig) # Important for batch mode to avoid showing plots
 
-    plt.show()
+def run_batch_plot_mode(args):
+    """Generates plots for a predefined list of openings."""
+    total_openings = len(BATCH_OPENINGS)
+    print(colorize(f"Starting batch plot generation for {total_openings} openings...", Colors.YELLOW))
+    print(f"Plots will be saved to the '{os.path.join(os.getcwd(), 'plots')}' directory.")
+    
+    for i, opening in enumerate(BATCH_OPENINGS):
+        print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", "WHITE"))
+        plot_args = argparse.Namespace(moves=opening['moves'].split(), speed=args.speed)
+        try:
+            run_plot_mode(plot_args, show_plot=False)
+            print(colorize(f"Successfully generated plot for {opening['name']}.", Colors.GREEN))
+        except Exception as e:
+            print(colorize(f"Failed to generate plot for {opening['name']}: {e}", Colors.RED))
+        
+        time.sleep(1) # Be friendly to the API
 
-# --- Main Execution & Signal Handling (unchanged from previous version) ---
+    print(colorize("\nBatch plot generation complete.", Colors.YELLOW))
+
+# --- Main Execution & Signal Handling ---
 def generate_filename(args, config, line_name):
     line_slug = "_".join(args.moves) if args.moves else "start_pos"
     if line_name and line_name != "N/A":
@@ -427,66 +527,46 @@ def print_final_summary(args, config, hunt_duration, line_name):
 
 def signal_handler(sig, frame):
     print(colorize("\n\nHunt interrupted by user.", Colors.YELLOW))
-    if found_lines:
+    if 'hunt_start_time' in globals() and 'interrupted_args' in globals() and found_lines:
         print_final_summary(interrupted_args, DEFAULT_HUNTER_CONFIG, time.time() - hunt_start_time, interrupted_line_name)
     print(f"\nTotal API calls made during this session: {api_manager.call_count}"); sys.exit(0)
 
-def run_line_mode(args):
-    print(colorize(f"\nAnalyzing line: {' '.join(args.moves) or '(start)'}", Colors.YELLOW))
-    print(f"Speeds: {args.speeds} | Ratings: {args.ratings}")
-    interesting_move = getattr(args, 'interesting_move_san', None)
-    white_reach, black_reach, _, _, line_name = print_line_reachability_stats(args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move)
-    final_fen, final_turn = get_fen_from_san_sequence(args.moves)
-    if not final_fen: return 1.0, 1.0, ""
-    data = api_manager.query(final_fen, args.speeds, args.ratings)
-    if data:
-        print()
-        print_move_stats(final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD)
-    return white_reach/100, black_reach/100, line_name
-
-def run_hunt_mode(args):
-    global found_lines, interrupted_args, hunt_start_time, interrupted_line_name
-    found_lines, interrupted_args = [], args
-    config = DEFAULT_HUNTER_CONFIG
-    hunt_start_time = time.time()
-    print("--- WickedLines Blunder Hunt ---")
-    print(f"Config: Min Games={config.MIN_GAMES}, Min Reach%={config.MIN_REACH_PCT}, ΔEV>|{config.DELTA_EV_THRESHOLD}|, p<{config.P_VALUE_THRESHOLD}, Branch={config.BRANCH_FACTOR}, ELO Gain Factor={config.ELO_PER_POINT}")
-    board, start_white_prob, start_black_prob, line_name = chess.Board(), 1.0, 1.0, ""
-    if args.moves:
-        start_white_prob, start_black_prob, line_name = run_line_mode(argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings))
-        for move in args.moves:
-            try: board.push_san(move)
-            except ValueError: return
-    interrupted_line_name = line_name
-    print(f"\n--- Starting Hunt from position: {' '.join(args.moves) or '(start)'} ---")
-    find_interesting_lines_iterative(board, args.moves, start_white_prob, start_black_prob, args.speeds, args.ratings, config, args.max_finds)
-    hunt_duration = time.time() - hunt_start_time
-    print(colorize("\n--- Hunt Complete ---", Colors.BLUE))
-    if found_lines:
-        print_final_summary(args, config, hunt_duration, line_name)
-    print(f"Total API calls made: {api_manager.call_count} (many results were served from cache)")
-
-if __name__ == "__main__":
+def main():
     signal.signal(signal.SIGINT, signal_handler)
+    global interrupted_args, hunt_start_time, interrupted_line_name, found_lines
     interrupted_args, hunt_start_time, interrupted_line_name = None, 0.0, ""
-    parser = argparse.ArgumentParser(description="WickedLines: Chess Opening Reachability & Value Explorer.")
-    parser.add_argument("--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters (for 'line' and 'hunt')")
-    parser.add_argument("--ratings", default="1400,1600,1800", help="Comma-separated rating filters (for 'line' and 'hunt')")
+    found_lines = []
+    
+    parser = argparse.ArgumentParser(
+        description="WickedLines: A tool for chess opening analysis using the Lichess database.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
     subparsers = parser.add_subparsers(dest="mode", required=True, help="Available modes")
 
     parser_line = subparsers.add_parser('line', help="Analyze a single, specific line of moves.")
-    parser_line.add_argument("moves", nargs="+", help="Move list in SAN")
+    parser_line.add_argument("moves", nargs="+", help="Move list in SAN (e.g., e4 e5 Nf3 Nc6)")
+    parser_line.add_argument("--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters. Default: blitz,rapid,classical")
+    parser_line.add_argument("--ratings", default="1600,1800", help="Comma-separated rating filters. Default: 1600,1800")
     parser_line.set_defaults(func=run_line_mode)
 
-    parser_hunt = subparsers.add_parser('hunt', help="Recursively search for interesting moves and blunders.")
+    parser_hunt = subparsers.add_parser('hunt', help="Recursively search for interesting opportunities and blunders.")
     parser_hunt.add_argument("moves", nargs="*", help="Optional initial move sequence to start the hunt from.")
-    parser_hunt.add_argument("--max-finds", type=int, help="Stop after finding N interesting lines.")
+    parser_hunt.add_argument("--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters. Default: blitz,rapid,classical")
+    parser_hunt.add_argument("--ratings", default="1600,1800", help="Comma-separated rating filters. Default: 1600,1800")
+    parser_hunt.add_argument("--max-finds", type=int, help="Stop the search after finding N interesting lines.")
     parser_hunt.set_defaults(func=run_hunt_mode)
 
-    parser_plot = subparsers.add_parser('plot', help="Plot EV, Reachability, and Popularity of a line across all ELO ratings.")
-    parser_plot.add_argument("moves", nargs="+", help="Move list in SAN to plot.")
+    parser_plot = subparsers.add_parser('plot', help="Plot the performance of an opening across all ELO ratings.")
+    parser_plot.add_argument("moves", nargs="+", help="Move list in SAN to plot (e.g., e4 c6).")
     parser_plot.add_argument("--speed", default="rapid", choices=['blitz', 'rapid', 'classical'], help="A single, fixed time control for the plot. Default: rapid.")
     parser_plot.set_defaults(func=run_plot_mode)
 
+    parser_batchplot = subparsers.add_parser('batchplot', help="Generate plots for a predefined list of major openings.")
+    parser_batchplot.add_argument("--speed", default="rapid", choices=['blitz', 'rapid', 'classical'], help="A single, fixed time control for all plots. Default: rapid.")
+    parser_batchplot.set_defaults(func=run_batch_plot_mode)
+
     args = parser.parse_args()
     args.func(args)
+
+if __name__ == "__main__":
+    main()
