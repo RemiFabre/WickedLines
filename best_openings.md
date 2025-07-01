@@ -1,12 +1,6 @@
 ## ♚ 1. Caro-Kann: `+26.85` (Black)
----
 ## ♙ 2. Levitsky Attack: `+22.63` (White)
----
 ## ♔ 3. King's Gambit: `+22.18` (White)
----
 ## ♕ 4. Center Game: `+20.72` (White)
----
 ## ♘ 5. Réti Opening: `+19.88` (White)
----
 ## ♞ 6. Elephant Gambit: `+19.18` (Black)
----
