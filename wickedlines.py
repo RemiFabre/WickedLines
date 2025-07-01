@@ -38,14 +38,17 @@ class APIManager:
         self.call_count = 0
     def query(self, fen, speeds, ratings):
         cache_key = f"{fen}|{speeds}|{ratings}"
-        if cache_key in self.cache: return self.cache[cache_key]
+        if cache_key in self.cache:
+            return self.cache[cache_key]
         params = {"fen": fen, "variant": "standard", "speeds": speeds, "ratings": ratings}
         while True:
             self.call_count += 1
             try:
                 r = requests.get(self.base_url, params=params)
                 if r.status_code == 429: print(f"\n{colorize('[INFO] Rate limit hit. Waiting 60s...', Colors.YELLOW)}"); time.sleep(60); continue
-                r.raise_for_status(); data = r.json(); self.cache[cache_key] = data; return data
+                r.raise_for_status(); data = r.json()
+                self.cache[cache_key] = data
+                return data
             except requests.exceptions.RequestException as e: print(f"\n{colorize('[ERROR] API request failed: ' + str(e), Colors.RED)}"); return None
 
 api_manager = APIManager()
@@ -241,20 +244,23 @@ def run_plot_mode(args):
     print(f"Fixed Time Control: {args.speed}")
     print("Querying Lichess database for ELO brackets. This may take a moment...")
 
-    elo_ratings, ev_values, reachability_values, popularity_values = [], [], [], []
+    player_advantage_values, reachability_values, popularity_values = [], [], []
     final_line_name = "Unknown Opening"
     forcing_player = "White"
     numeric_elo_ratings = [int(r.replace('2500', '2600')) for r in PLOT_ELO_BRACKETS]
 
     for i, rating in enumerate(PLOT_ELO_BRACKETS):
         ev, reach, pop, line_name, player = get_stats_for_line(args.moves, args.speed, rating)
-        elo_ratings.append(numeric_elo_ratings[i])
-        ev_values.append(ev)
+        
+        # [NEW] Calculate Player's Advantage
+        player_advantage = ev if player == 'White' else ev * -1
+        
+        player_advantage_values.append(player_advantage)
         reachability_values.append(reach)
         popularity_values.append(pop)
         if line_name != "Unknown Opening": final_line_name = line_name
         forcing_player = player
-        print(f"  ({i+1}/{len(PLOT_ELO_BRACKETS)}) Processed {rating} ELO... EV: {ev:+.1f}, Reachability: {reach:.2f}%, Popularity: {pop:.2f}%")
+        print(f"  ({i+1}/{len(PLOT_ELO_BRACKETS)}) Processed {rating} ELO... Player Advantage: {player_advantage:+.1f}, Reachability: {reach:.2f}%, Popularity: {pop:.2f}%")
 
     print(colorize("\nData collection complete. Generating final plot...", Colors.GREEN))
 
@@ -265,33 +271,35 @@ def run_plot_mode(args):
     )
     fig.set_facecolor('white')
 
-    color_ev = '#0057b8'
+    color_adv = '#0057b8' # Blue for advantage
     color_reach = '#e34234'
     color_pop = '#9467bd'
 
-    # --- Top Plot: EV vs. Reachability ---
-    ax1.set_ylabel('Expected Value (EV)', color=color_ev, fontsize=14, weight='bold')
-    ax1.plot(elo_ratings, ev_values, 'o-', color=color_ev, label='Expected Value (EV)', markersize=7, linewidth=2.5)
-    ax1.tick_params(axis='y', labelcolor=color_ev, labelsize=11)
+    # --- Top Plot: Player's Advantage vs. Reachability ---
+    ax1.set_ylabel("Player's Advantage", color=color_adv, fontsize=14, weight='bold')
+    ax1.plot(numeric_elo_ratings, player_advantage_values, 'o-', color=color_adv, label="Player's Advantage", markersize=7, linewidth=2.5)
+    ax1.tick_params(axis='y', labelcolor=color_adv, labelsize=11)
     ax1.axhline(0, color='black', linestyle='--', linewidth=1.0, alpha=0.7)
-    ax1.grid(True, which='both', linestyle=':', linewidth=0.7, alpha=0.7)
+    ax1.grid(True, which='major', axis='y', linestyle=':', linewidth=0.7)
+    ax1.grid(True, which='major', axis='x', linestyle=':', linewidth=0.7)
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('Reachability %', color=color_reach, fontsize=14, weight='bold')
-    ax2.plot(elo_ratings, reachability_values, 's--', color=color_reach, label=f'Reachability % (If {forcing_player} Wants)', markersize=6, linewidth=2.0)
+    ax2.plot(numeric_elo_ratings, reachability_values, 's--', color=color_reach, label=f'Reachability % (If {forcing_player} Wants)', markersize=6, linewidth=2.0)
     ax2.tick_params(axis='y', labelcolor=color_reach, labelsize=11)
-    ax2.set_ylim(bottom=0, top=101) # Set Y-axis from 0 to 100
+    ax2.set_ylim(bottom=0, top=101)
+    ax2.grid(False)
 
     # --- Bottom Plot: Popularity ---
     ax3.set_ylabel('Popularity %', color=color_pop, fontsize=12, weight='bold')
-    ax3.plot(elo_ratings, popularity_values, 'd:', color=color_pop, label='Popularity % (Raw)', markersize=6, linewidth=2.0)
+    ax3.plot(numeric_elo_ratings, popularity_values, 'd:', color=color_pop, label='Popularity % (Raw)', markersize=6, linewidth=2.0)
     ax3.tick_params(axis='y', labelcolor=color_pop, labelsize=11)
-    ax3.set_ylim(bottom=0) # Set Y-axis to start at 0
-    ax3.grid(True, which='both', linestyle=':', linewidth=0.7, alpha=0.7)
+    ax3.set_ylim(bottom=0)
+    ax3.grid(True, which='major', axis='both', linestyle=':', linewidth=0.7)
 
     # --- Shared X-Axis Configuration ---
-    plt.xticks(numeric_elo_ratings, labels=PLOT_ELO_BRACKETS, rotation=30, ha='right')
     ax3.set_xlabel('ELO Rating Bracket', fontsize=12, labelpad=10)
+    plt.xticks(numeric_elo_ratings, labels=PLOT_ELO_BRACKETS, rotation=30, ha='right')
 
     # --- Titles, Legend, and Text ---
     line_str = ' '.join(args.moves)
@@ -303,14 +311,14 @@ def run_plot_mode(args):
     handles2, labels2 = ax2.get_legend_handles_labels()
     handles3, labels3 = ax3.get_legend_handles_labels()
     fig.legend(handles1 + handles2 + handles3, labels1 + labels2 + labels3,
-               loc='lower center', bbox_to_anchor=(0.5, 0.2), ncol=3, fontsize=12, frameon=True, shadow=True)
+               loc='lower center', bbox_to_anchor=(0.5, 0.25), ncol=3, fontsize=12, frameon=True, shadow=True)
 
-    fig.subplots_adjust(bottom=0.3, top=0.92, left=0.08, right=0.92)
-    ev_expl = "Expected Value (EV): (+1 * White Win %) + (0 * Draw %) + (-1 * Black Win %)"
+    fig.subplots_adjust(bottom=0.35, top=0.92, left=0.08, right=0.92)
+    adv_expl = f"Player's Advantage: The statistical score from the perspective of {forcing_player}. Positive is always good."
     reach_expl = f"Reachability %: Chance to reach this position if {forcing_player} actively tries to play this line."
     pop_expl = "Popularity %: Raw percentage of all games that follow this exact sequence of moves."
 
-    fig.text(0.5, 0.12, ev_expl, ha='center', va='bottom', fontsize=11)
+    fig.text(0.5, 0.12, adv_expl, ha='center', va='bottom', fontsize=11)
     fig.text(0.5, 0.07, reach_expl, ha='center', va='bottom', fontsize=11)
     fig.text(0.5, 0.02, pop_expl, ha='center', va='bottom', fontsize=11)
 
@@ -323,8 +331,7 @@ def run_plot_mode(args):
 
     plt.show()
 
-
-# --- Main Execution & Signal Handling ---
+# --- Main Execution & Signal Handling (unchanged from previous version) ---
 def generate_filename(args, config, line_name):
     line_slug = "_".join(args.moves) if args.moves else "start_pos"
     if line_name and line_name != "N/A":
