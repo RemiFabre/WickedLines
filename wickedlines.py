@@ -14,9 +14,18 @@ from collections import namedtuple, deque
 from scipy.stats import chi2_contingency
 from datetime import datetime
 
+# --- Matplotlib Dependency ---
+try:
+    import matplotlib.pyplot as plt
+    import matplotlib.font_manager as fm
+except ImportError:
+    print("Matplotlib not found. Please install it with: pip install matplotlib")
+    sys.exit(1)
+
 # --- Configuration ---
 HunterConfig = namedtuple('HunterConfig', ['MIN_GAMES', 'MIN_REACH_PCT', 'DELTA_EV_THRESHOLD', 'P_VALUE_THRESHOLD', 'MAX_DEPTH', 'BRANCH_FACTOR', 'ELO_PER_POINT'])
 DEFAULT_HUNTER_CONFIG = HunterConfig(MIN_GAMES=1000, MIN_REACH_PCT=1.0, DELTA_EV_THRESHOLD=5.0, P_VALUE_THRESHOLD=0.05, MAX_DEPTH=10, BRANCH_FACTOR=4, ELO_PER_POINT=8)
+PLOT_ELO_BRACKETS = ["400", "600", "800", "1000", "1200", "1400", "1600", "1800", "2000", "2200", "2500"]
 
 # --- Global State & Classes ---
 class Colors:
@@ -28,14 +37,15 @@ class APIManager:
         self.cache = {}
         self.call_count = 0
     def query(self, fen, speeds, ratings):
-        if fen in self.cache: return self.cache[fen]
+        cache_key = f"{fen}|{speeds}|{ratings}"
+        if cache_key in self.cache: return self.cache[cache_key]
         params = {"fen": fen, "variant": "standard", "speeds": speeds, "ratings": ratings}
         while True:
             self.call_count += 1
             try:
                 r = requests.get(self.base_url, params=params)
                 if r.status_code == 429: print(f"\n{colorize('[INFO] Rate limit hit. Waiting 60s...', Colors.YELLOW)}"); time.sleep(60); continue
-                r.raise_for_status(); data = r.json(); self.cache[fen] = data; return data
+                r.raise_for_status(); data = r.json(); self.cache[cache_key] = data; return data
             except requests.exceptions.RequestException as e: print(f"\n{colorize('[ERROR] API request failed: ' + str(e), Colors.RED)}"); return None
 
 api_manager = APIManager()
@@ -88,7 +98,7 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
         if p_value < 0.001: p_str = colorize("<0.001", Colors.GREEN)
         else: p_str = colorize(f"{p_value:.3f}", Colors.GREEN) if p_value < DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD else f"{p_value:.3f}"
         prev_total, move_total = parent_w + parent_d + parent_b, w+d+b
-        move_pct = move_total / prev_total if prev_total else 0
+        move_pct = move_total / prev_total if prev_total > 0 else 0
         if played_by == "W": black_wants *= move_pct
         else: white_wants *= move_pct
         board.push_san(move_san)
@@ -189,57 +199,168 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
             new_white_prob, new_black_prob = (white_prob, black_prob * move_pct) if is_white_turn else (white_prob * move_pct, black_prob)
             stack.append((new_board.fen(), move_history + [move_san], current_data, new_white_prob, new_black_prob, depth + 1))
 
+
+# --- "Plot" Mode Logic ---
+def get_stats_for_line(moves, speed, rating_bracket):
+    board = chess.Board()
+    white_wants, black_wants = 1.0, 1.0
+    line_name = "N/A"
+    root_data = api_manager.query(board.fen(), speed, rating_bracket)
+    if not root_data: return 0, 0, 0, "API Error", "White"
+    root_total_games = sum(root_data.get(k, 0) for k in ['white', 'draws', 'black'])
+    if root_total_games == 0: root_total_games = 1
+    prev_data = root_data
+    for move_san in moves:
+        played_by = "W" if board.turn == chess.WHITE else "B"
+        move_data = next((m for m in prev_data.get("moves", []) if m.get("san") == move_san), None)
+        if not move_data: break
+        parent_total_ply = sum(prev_data.get(k, 0) for k in ['white', 'draws', 'black'])
+        if parent_total_ply == 0: break
+        move_total = sum(move_data.get(k, 0) for k in ['white', 'draws', 'black'])
+        move_pct = move_total / parent_total_ply if parent_total_ply > 0 else 0
+        if played_by == "W": black_wants *= move_pct
+        else: white_wants *= move_pct
+        board.push_san(move_san)
+        prev_data = api_manager.query(board.fen(), speed, rating_bracket)
+        if not prev_data: break
+        line_name = (prev_data.get("opening") or {}).get("name", line_name)
+    is_last_move_by_white = len(moves) % 2 != 0
+    forcing_player = "White" if is_last_move_by_white else "Black"
+    reachability = white_wants if forcing_player == "White" else black_wants
+    final_data = prev_data
+    if not final_data: return 0, 0, 0, line_name, forcing_player
+    final_pos_total_games = sum(final_data.get(k, 0) for k in ['white', 'draws', 'black'])
+    popularity = final_pos_total_games / root_total_games if root_total_games > 0 else 0
+    if final_pos_total_games == 0:
+        return 0, reachability * 100, popularity * 100, line_name, forcing_player
+    ev = (final_data.get('white', 0) - final_data.get('black', 0)) / final_pos_total_games * 100
+    return ev, reachability * 100, popularity * 100, line_name, forcing_player
+
+def run_plot_mode(args):
+    print(colorize(f"\nGenerating plot for line: {' '.join(args.moves)}", Colors.YELLOW))
+    print(f"Fixed Time Control: {args.speed}")
+    print("Querying Lichess database for ELO brackets. This may take a moment...")
+
+    elo_ratings, ev_values, reachability_values, popularity_values = [], [], [], []
+    final_line_name = "Unknown Opening"
+    forcing_player = "White"
+    numeric_elo_ratings = [int(r.replace('2500', '2600')) for r in PLOT_ELO_BRACKETS]
+
+    for i, rating in enumerate(PLOT_ELO_BRACKETS):
+        ev, reach, pop, line_name, player = get_stats_for_line(args.moves, args.speed, rating)
+        elo_ratings.append(numeric_elo_ratings[i])
+        ev_values.append(ev)
+        reachability_values.append(reach)
+        popularity_values.append(pop)
+        if line_name != "Unknown Opening": final_line_name = line_name
+        forcing_player = player
+        print(f"  ({i+1}/{len(PLOT_ELO_BRACKETS)}) Processed {rating} ELO... EV: {ev:+.1f}, Reachability: {reach:.2f}%, Popularity: {pop:.2f}%")
+
+    print(colorize("\nData collection complete. Generating final plot...", Colors.GREEN))
+
+    plt.style.use('seaborn-v0_8-whitegrid')
+    fig, (ax1, ax3) = plt.subplots(
+        nrows=2, ncols=1, figsize=(15, 12), sharex=True,
+        gridspec_kw={'height_ratios': [3, 1], 'hspace': 0.1}
+    )
+    fig.set_facecolor('white')
+
+    color_ev = '#0057b8'
+    color_reach = '#e34234'
+    color_pop = '#9467bd'
+
+    # --- Top Plot: EV vs. Reachability ---
+    ax1.set_ylabel('Expected Value (EV)', color=color_ev, fontsize=14, weight='bold')
+    ax1.plot(elo_ratings, ev_values, 'o-', color=color_ev, label='Expected Value (EV)', markersize=7, linewidth=2.5)
+    ax1.tick_params(axis='y', labelcolor=color_ev, labelsize=11)
+    ax1.axhline(0, color='black', linestyle='--', linewidth=1.0, alpha=0.7)
+    ax1.grid(True, which='both', linestyle=':', linewidth=0.7, alpha=0.7)
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Reachability %', color=color_reach, fontsize=14, weight='bold')
+    ax2.plot(elo_ratings, reachability_values, 's--', color=color_reach, label=f'Reachability % (If {forcing_player} Wants)', markersize=6, linewidth=2.0)
+    ax2.tick_params(axis='y', labelcolor=color_reach, labelsize=11)
+    ax2.set_ylim(bottom=0, top=101) # Set Y-axis from 0 to 100
+
+    # --- Bottom Plot: Popularity ---
+    ax3.set_ylabel('Popularity %', color=color_pop, fontsize=12, weight='bold')
+    ax3.plot(elo_ratings, popularity_values, 'd:', color=color_pop, label='Popularity % (Raw)', markersize=6, linewidth=2.0)
+    ax3.tick_params(axis='y', labelcolor=color_pop, labelsize=11)
+    ax3.set_ylim(bottom=0) # Set Y-axis to start at 0
+    ax3.grid(True, which='both', linestyle=':', linewidth=0.7, alpha=0.7)
+
+    # --- Shared X-Axis Configuration ---
+    plt.xticks(numeric_elo_ratings, labels=PLOT_ELO_BRACKETS, rotation=30, ha='right')
+    ax3.set_xlabel('ELO Rating Bracket', fontsize=12, labelpad=10)
+
+    # --- Titles, Legend, and Text ---
+    line_str = ' '.join(args.moves)
+    title_opening_name = f"({final_line_name})" if final_line_name not in ["Unknown Opening", "N/A"] else ""
+    fig.suptitle(f"Performance Analysis for: {line_str} {title_opening_name}", fontsize=20, weight='bold', y=0.98)
+    ax1.set_title(f"Based on Lichess {args.speed.title()} Games", fontsize=14, pad=10)
+
+    handles1, labels1 = ax1.get_legend_handles_labels()
+    handles2, labels2 = ax2.get_legend_handles_labels()
+    handles3, labels3 = ax3.get_legend_handles_labels()
+    fig.legend(handles1 + handles2 + handles3, labels1 + labels2 + labels3,
+               loc='lower center', bbox_to_anchor=(0.5, 0.2), ncol=3, fontsize=12, frameon=True, shadow=True)
+
+    fig.subplots_adjust(bottom=0.3, top=0.92, left=0.08, right=0.92)
+    ev_expl = "Expected Value (EV): (+1 * White Win %) + (0 * Draw %) + (-1 * Black Win %)"
+    reach_expl = f"Reachability %: Chance to reach this position if {forcing_player} actively tries to play this line."
+    pop_expl = "Popularity %: Raw percentage of all games that follow this exact sequence of moves."
+
+    fig.text(0.5, 0.12, ev_expl, ha='center', va='bottom', fontsize=11)
+    fig.text(0.5, 0.07, reach_expl, ha='center', va='bottom', fontsize=11)
+    fig.text(0.5, 0.02, pop_expl, ha='center', va='bottom', fontsize=11)
+
+    plots_dir = "plots"
+    os.makedirs(plots_dir, exist_ok=True)
+    filename = f"{'_'.join(args.moves).replace(' ', '_')}_{args.speed}.png"
+    filepath = os.path.join(plots_dir, filename)
+    plt.savefig(filepath, dpi=150)
+    print(colorize(f"Plot saved to: {filepath}", Colors.YELLOW))
+
+    plt.show()
+
+
 # --- Main Execution & Signal Handling ---
 def generate_filename(args, config, line_name):
-    """Generates a unique, information-rich filename for a hunt report."""
     line_slug = "_".join(args.moves) if args.moves else "start_pos"
-    if line_name:
+    if line_name and line_name != "N/A":
         name_slug = "".join(c for c in line_name.split(":")[0] if c.isalnum() or c in " -").rstrip()
         line_slug = f"{line_slug}_{name_slug.replace(' ', '_')}"
-    
     ratings_slug = f"ratings-{args.ratings.replace(',', '-')}"
     speeds_slug = f"speeds-{args.speeds.replace(',', '-')}"
     config_slug = f"MD-{config.MAX_DEPTH}_MG-{config.MIN_GAMES}_BF-{config.BRANCH_FACTOR}"
-    
     return f"{line_slug}_{ratings_slug}_{speeds_slug}_{config_slug}.md"
 
 def update_hunt_index(results_dir="hunt_results"):
     index_path = "HUNT_INDEX.md"
     try:
         if not os.path.exists(results_dir): return
-        
         reports_data = []
         for filename in os.listdir(results_dir):
             if filename.endswith('.md'):
                 parts = filename.replace('.md', '').split('_')
-                # A simple parser for the structured filename
                 data = {'path': os.path.join(results_dir, filename)}
-                # Reconstruct line and opening name
                 line_parts, config_parts = [], []
                 config_started = False
                 for part in parts:
-                    if 'ratings-' in part or 'speeds-' in part or 'MD-' in part:
-                        config_started = True
-                    if config_started:
-                        config_parts.append(part)
-                    else:
-                        line_parts.append(part)
-                
-                data['line_slug'] = ' '.join(line_parts) # This is an approximation for grouping
-                # Extract main config for display
+                    if 'ratings-' in part or 'speeds-' in part or 'MD-' in part: config_started = True
+                    if config_started: config_parts.append(part)
+                    else: line_parts.append(part)
+                data['line_slug'] = ' '.join(line_parts)
                 for part in config_parts:
                     if 'ratings-' in part: data['ratings'] = part.replace('ratings-', '').replace('-',',')
                     if 'speeds-' in part: data['speeds'] = part.replace('speeds-', '').replace('-',',')
                     if 'MD-' in part: data['config_str'] = part.replace('-','=').replace('_',', ')
                 reports_data.append(data)
-        
-        # Group reports by line
         grouped_reports = {}
         for report in reports_data:
             line = report.get('line_slug', 'Unknown')
             if line not in grouped_reports: grouped_reports[line] = []
             grouped_reports[line].append(report)
-
         with open(index_path, "w", encoding="utf-8") as f:
             f.write("# WickedLines Hunt Results Index\n\n")
             f.write("A collection of all opening opportunities discovered by the `hunt` command.\n\n")
@@ -251,42 +372,35 @@ def update_hunt_index(results_dir="hunt_results"):
                     for report in reports:
                         f.write(f"- **Ratings**: `{report.get('ratings','N/A')}` | **Speeds**: `{report.get('speeds','N/A')}` | **Config**: `{report.get('config_str','N/A')}` -> **[View Report]({report['path']})**\n")
                     f.write("\n")
-
         print(colorize(f"Updated master index file: {index_path}", Colors.YELLOW))
-    except Exception as e:
-        print(colorize(f"Could not update hunt index: {e}", Colors.RED))
+    except Exception as e: print(colorize(f"Could not update hunt index: {e}", Colors.RED))
 
 def print_final_summary(args, config, hunt_duration, line_name):
     if not found_lines: return
-    terminal_output = [colorize("\n" + " Hunt Summary ".center(85, "-"), Colors.BLUE), "Top opportunities ranked by expected ELO gain over 100 games:\n"]
+    print(colorize("\n" + " Hunt Summary ".center(85, "-"), Colors.BLUE))
+    print("Top opportunities ranked by expected ELO gain over 100 games:\n")
     file_output = ["# WickedLines Hunt Report", f"### For initial line: `{' '.join(args.moves) or '(start)'}` ({line_name or 'no name'})"]
     file_output.append(f"\n- **Date:** `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`")
     file_output.append(f"- **Ratings:** `{args.ratings}` | **Speeds:** `{args.speeds}`")
     file_output.append(f"- **Config:** Min Games=`{config.MIN_GAMES}`, Max Depth=`{config.MAX_DEPTH}`, Min Reach=`{config.MIN_REACH_PCT}%`, Branch Factor=`{config.BRANCH_FACTOR}`")
     file_output.append(f"- **Analysis Duration:** `{hunt_duration:.2f} seconds`")
     file_output.append(f"- **API Calls:** `{api_manager.call_count}`")
-    file_output.append("\n---\n"); file_output.append("\nTop opportunities ranked by expected ELO gain over 100 games:\n")
-    
+    file_output.append("\n---\n\nTop opportunities ranked by expected ELO gain over 100 games:\n")
     sorted_report = sorted(found_lines, key=lambda x: x['elo_gain'], reverse=True)
     for i, item in enumerate(sorted_report):
         rank = i + 1
         p_str = "<0.001" if item['p_value'] < 0.001 else f"{item['p_value']:.3f}"
-        p_str_color = colorize(p_str, Colors.GREEN)
         elo_gain_str = f"ELO Gain/100: {item['elo_gain']:>+5.2f}"
         player_title = item['player'].title()
         delta_ev_str = f"{colorize_ev(item['delta_ev'])} (good for {player_title})"
         delta_ev_str_plain = f"{item['delta_ev']:+.1f} (good for {player_title})"
         reach_pct_str = f"Reachable: {item['reach_pct']:.2f}%"
         opening_str = f"({colorize(item['opening_name'], Colors.GRAY)})"
-        
-        # Terminal Output
         print(f"{rank}. {colorize(elo_gain_str, Colors.GREEN)} | {colorize(reach_pct_str, Colors.YELLOW)}")
         print(f"   Line: {colorize(' '.join(item['line_moves']), Colors.BLUE)} {opening_str}")
         print(f"   Impact: Line EV: {colorize_ev(item['line_ev']):<14} | ΔEV: {delta_ev_str}")
         print(f"   URL:  {generate_lichess_url(item['line_moves'])}")
         print("")
-        
-        # File Output
         file_output.append(f"## {rank}. ELO Gain/100: `{item['elo_gain']:+.2f}`")
         file_output.append(f"- **Line:** `{' '.join(item['line_moves'])}` ({item['opening_name']})")
         file_output.append(f"- **Reachable:** `{item['reach_pct']:.2f}%`")
@@ -294,9 +408,6 @@ def print_final_summary(args, config, hunt_duration, line_name):
         file_output.append(f"- **Significance (p-value):** `{p_str}`")
         file_output.append(f"- **[Analyze on Lichess]({generate_lichess_url(item['line_moves'])})**")
         file_output.append("\n---\n")
-
-    print("\n".join(terminal_output))
-    
     results_dir = "hunt_results"
     filename = generate_filename(args, config, line_name)
     filepath = os.path.join(results_dir, filename)
@@ -309,7 +420,8 @@ def print_final_summary(args, config, hunt_duration, line_name):
 
 def signal_handler(sig, frame):
     print(colorize("\n\nHunt interrupted by user.", Colors.YELLOW))
-    print_final_summary(interrupted_args, DEFAULT_HUNTER_CONFIG, time.time() - hunt_start_time, interrupted_line_name)
+    if found_lines:
+        print_final_summary(interrupted_args, DEFAULT_HUNTER_CONFIG, time.time() - hunt_start_time, interrupted_line_name)
     print(f"\nTotal API calls made during this session: {api_manager.call_count}"); sys.exit(0)
 
 def run_line_mode(args):
@@ -320,7 +432,9 @@ def run_line_mode(args):
     final_fen, final_turn = get_fen_from_san_sequence(args.moves)
     if not final_fen: return 1.0, 1.0, ""
     data = api_manager.query(final_fen, args.speeds, args.ratings)
-    if data: print(); print_move_stats(final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD)
+    if data:
+        print()
+        print_move_stats(final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD)
     return white_reach/100, black_reach/100, line_name
 
 def run_hunt_mode(args):
@@ -341,22 +455,31 @@ def run_hunt_mode(args):
     find_interesting_lines_iterative(board, args.moves, start_white_prob, start_black_prob, args.speeds, args.ratings, config, args.max_finds)
     hunt_duration = time.time() - hunt_start_time
     print(colorize("\n--- Hunt Complete ---", Colors.BLUE))
-    print_final_summary(args, config, hunt_duration, line_name)
+    if found_lines:
+        print_final_summary(args, config, hunt_duration, line_name)
     print(f"Total API calls made: {api_manager.call_count} (many results were served from cache)")
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     interrupted_args, hunt_start_time, interrupted_line_name = None, 0.0, ""
     parser = argparse.ArgumentParser(description="WickedLines: Chess Opening Reachability & Value Explorer.")
-    parser.add_argument("--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters")
-    parser.add_argument("--ratings", default="1400,1600,1800", help="Comma-separated rating filters")
+    parser.add_argument("--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters (for 'line' and 'hunt')")
+    parser.add_argument("--ratings", default="1400,1600,1800", help="Comma-separated rating filters (for 'line' and 'hunt')")
     subparsers = parser.add_subparsers(dest="mode", required=True, help="Available modes")
+
     parser_line = subparsers.add_parser('line', help="Analyze a single, specific line of moves.")
     parser_line.add_argument("moves", nargs="+", help="Move list in SAN")
     parser_line.set_defaults(func=run_line_mode)
+
     parser_hunt = subparsers.add_parser('hunt', help="Recursively search for interesting moves and blunders.")
     parser_hunt.add_argument("moves", nargs="*", help="Optional initial move sequence to start the hunt from.")
     parser_hunt.add_argument("--max-finds", type=int, help="Stop after finding N interesting lines.")
     parser_hunt.set_defaults(func=run_hunt_mode)
+
+    parser_plot = subparsers.add_parser('plot', help="Plot EV, Reachability, and Popularity of a line across all ELO ratings.")
+    parser_plot.add_argument("moves", nargs="+", help="Move list in SAN to plot.")
+    parser_plot.add_argument("--speed", default="rapid", choices=['blitz', 'rapid', 'classical'], help="A single, fixed time control for the plot. Default: rapid.")
+    parser_plot.set_defaults(func=run_plot_mode)
+
     args = parser.parse_args()
     args.func(args)
