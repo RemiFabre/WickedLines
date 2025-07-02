@@ -335,12 +335,10 @@ def run_plot_mode(args):
         # get_stats_for_line returns ev as a percentage score (e.g., 5.0 for +5%)
         ev, reach, pop, root_ev, line_name, player = get_stats_for_line(args.moves, args.speed, rating)
         
-        # Invert the score for Black's perspective
         player_advantage = ev if player == 'White' else ev * -1
         baseline_advantage = root_ev if player == 'White' else root_ev * -1
         
-        # Correctly calculate Elo gain over 100 games
-        # (Win% - Loss%) * Elo_Factor = Elo Gain / 100 Games
+        # Elo gain over 100 games = (Win% - Loss%) * Elo_Factor
         elo_gain_values.append(player_advantage * ELO_FACTOR)
         baseline_elo_gain_values.append(baseline_advantage * ELO_FACTOR)
         
@@ -354,18 +352,17 @@ def run_plot_mode(args):
 
     print(colorize("\nData collection complete. Generating final plot...", Colors.GREEN))
 
-    # --- Plotting with the new 1+2 layout ---
     plt.style.use('seaborn-v0_8-darkgrid')
-    fig = plt.figure(figsize=(16, 12))
+    fig = plt.figure(figsize=(20, 16)) # Significantly larger figure
     fig.set_facecolor('#2E2E2E')
 
-    # Define the grid layout
-    gs = fig.add_gridspec(3, 2, height_ratios=[3, 2, 1.8], width_ratios=(1,1), hspace=0.5, wspace=0.3)
-    ax1 = fig.add_subplot(gs[0, :]) # Top-row plot
-    ax2 = fig.add_subplot(gs[1, 0]) # Bottom-left plot
-    ax3 = fig.add_subplot(gs[1, 1]) # Bottom-right plot
-    text_ax = fig.add_subplot(gs[2, 0]) # Area for text
-    logo_ax = fig.add_subplot(gs[2, 1]) # Area for logo
+    # Define the grid layout for charts and the text/logo area
+    gs = fig.add_gridspec(3, 2, height_ratios=[3, 2, 2.2], width_ratios=(1,1), hspace=0.4, wspace=0.25)
+    ax1 = fig.add_subplot(gs[0, :])
+    ax2 = fig.add_subplot(gs[1, 0])
+    ax3 = fig.add_subplot(gs[1, 1])
+    text_ax = fig.add_subplot(gs[2, 0])
+    logo_ax = fig.add_subplot(gs[2, 1])
 
     color_elo = '#57A8D8'
     color_reach = '#F07C32'
@@ -377,35 +374,35 @@ def run_plot_mode(args):
     for ax in [ax1, ax2, ax3]:
         ax.set_facecolor('#2E2E2E')
         for spine in ax.spines.values(): spine.set_edgecolor('gray')
-        ax.tick_params(axis='y', colors=light_text_color, labelsize=10)
-        ax.tick_params(axis='x', colors=light_text_color, labelsize=10, rotation=30, pad=5)
+        ax.tick_params(axis='y', colors=light_text_color, labelsize=12)
+        ax.tick_params(axis='x', colors=light_text_color, labelsize=12, rotation=30, pad=10)
         ax.grid(True, which='major', axis='both', linestyle=':', linewidth=0.7, alpha=0.5)
 
     # Plot 1: Performance
-    ax1.set_title("Performance", color=light_text_color, fontsize=16, weight='bold')
-    ax1.set_ylabel("Exp. Elo Gain / 100 Games", color=color_elo, fontsize=11, weight='bold')
-    ax1.plot(numeric_elo_ratings, elo_gain_values, 'o-', color=color_elo, label="Expected Elo Gain / 100 Games", markersize=6)
-    ax1.plot(numeric_elo_ratings, baseline_elo_gain_values, linestyle='-.', color=color_base, label=f"Average {forcing_player} Elo Gain", linewidth=2)
+    ax1.set_title("Performance", color=light_text_color, fontsize=18, weight='bold')
+    ax1.set_ylabel("Exp. Elo Gain / 100 Games", color=color_elo, fontsize=14, weight='bold')
+    ax1.plot(numeric_elo_ratings, elo_gain_values, 'o-', color=color_elo, label="Expected Elo Gain / 100 Games", markersize=8, linewidth=3)
+    ax1.plot(numeric_elo_ratings, baseline_elo_gain_values, linestyle='-.', color=color_base, label=f"Average {forcing_player} Elo Gain / 100 Games", linewidth=2.5)
     ax1.axhline(0, color='lightgray', linestyle='--', linewidth=1.0, alpha=0.7)
-    ax1.legend(facecolor='#424242', edgecolor='gray', labelcolor=light_text_color, fontsize=10)
+    ax1.legend(facecolor='#424242', edgecolor='gray', labelcolor=light_text_color, fontsize=12)
     plt.setp(ax1.get_xticklabels(), rotation=0)
 
     # Plot 2: Reachability & Popularity
-    ax2.set_title("Reachability & Popularity", color=light_text_color, fontsize=14, weight='bold')
-    ax2.set_ylabel('Reachability %', color=color_reach, fontsize=11)
-    ax2.plot(numeric_elo_ratings, reachability_values, 's--', color=color_reach, markersize=5)
+    ax2.set_title("Reachability & Popularity", color=light_text_color, fontsize=16, weight='bold')
+    ax2.set_ylabel('Reachability %', color=color_reach, fontsize=12)
+    ax2.plot(numeric_elo_ratings, reachability_values, 's--', color=color_reach, markersize=6, linewidth=2)
     ax2.set_ylim(bottom=0)
     ax2_twin = ax2.twinx()
-    ax2_twin.set_ylabel('Popularity %', color=color_pop, fontsize=11)
-    ax2_twin.plot(numeric_elo_ratings, popularity_values, 'd:', color=color_pop, markersize=5)
+    ax2_twin.set_ylabel('Popularity %', color=color_pop, fontsize=12)
+    ax2_twin.plot(numeric_elo_ratings, popularity_values, 'd:', color=color_pop, markersize=6, linewidth=2)
     ax2_twin.spines['right'].set_edgecolor('gray')
-    ax2_twin.tick_params(axis='y', colors=light_text_color, labelsize=10)
+    ax2_twin.tick_params(axis='y', colors=light_text_color, labelsize=12)
     ax2_twin.set_ylim(bottom=0)
 
     # Plot 3: Theory Advantage
-    ax3.set_title("Theory Advantage", color=light_text_color, fontsize=14, weight='bold')
-    ax3.set_ylabel('Advantage Ratio (x)', color=color_theory, fontsize=11)
-    ax3.plot(numeric_elo_ratings, theory_advantage_values, '*-', color=color_theory, markersize=6)
+    ax3.set_title("Theory Advantage", color=light_text_color, fontsize=16, weight='bold')
+    ax3.set_ylabel('Advantage Ratio', color=color_theory, fontsize=12)
+    ax3.plot(numeric_elo_ratings, theory_advantage_values, '*-', color=color_theory, markersize=8, linewidth=2)
     ax3.set_ylim(bottom=0)
 
     # Area 4: Text Explanations
@@ -414,16 +411,29 @@ def run_plot_mode(args):
         elo_formula = f"(White Win % - Black Win %) * {ELO_FACTOR} * 100"
     else:
         elo_formula = f"(Black Win % - White Win %) * {ELO_FACTOR} * 100"
-    
-    adv_expl = f"Expected Elo Gain over 100 games playing this line: `{elo_formula}`. Positive is good for {forcing_player}."
-    base_expl = f"Average {forcing_player} Elo Gain: The average Elo gain for {forcing_player} over 100 games."
-    reach_expl = f"Reachability %: Chance to reach this position if {forcing_player} actively tries to play this line."
-    pop_expl = "Popularity %: Raw percentage of all games that follow this exact sequence of moves."
-    theory_expl = "Theory Advantage: Ratio of Reachability to Popularity. High value suggests a surprise weapon where preparation is highly efficient."
 
-    full_explanation = f"{adv_expl}\n\n{base_expl}\n\n{reach_expl}\n\n{pop_expl}\n\n{theory_expl}"
-    text_ax.text(0.05, 0.95, full_explanation, ha='left', va='top', fontsize=11, color=light_text_color, linespacing=1.6)
+    # Two-column layout for text to prevent overlap
+    bold_titles = [
+        "Expected Elo Gain:",
+        f"Average {forcing_player} Elo Gain:",
+        "Reachability %:",
+        "Popularity %:",
+        "Theory Advantage:"
+    ]
+    descriptions = [
+        f"{elo_formula}. Positive is good for {forcing_player}.",
+        f"The average result for {forcing_player} from the game's starting position.",
+        f"Chance to reach this position if {forcing_player} actively tries to play this line.",
+        "Raw percentage of all games that follow this exact sequence of moves.",
+        "Ratio of Reachability to Popularity. High values suggest a surprise weapon\nwhere preparation is highly efficient."
+    ]
     
+    y_pos = 1.0
+    for i in range(len(bold_titles)):
+        text_ax.text(0.0, y_pos, bold_titles[i], ha='left', va='top', fontsize=14, color=light_text_color, weight='bold', transform=text_ax.transAxes)
+        text_ax.text(0.45, y_pos, descriptions[i], ha='left', va='top', fontsize=14, color=light_text_color, transform=text_ax.transAxes, linespacing=1.6)
+        y_pos -= 0.22
+
     # Area 5: Logo
     logo_ax.axis('off')
     logo_filename = f"{''.join(args.moves)}_logo.png"
@@ -437,16 +447,15 @@ def run_plot_mode(args):
     # Global Title
     line_str = f"({' '.join(args.moves)})"
     title_opening_name = final_line_name if final_line_name not in ["Unknown Opening", "N/A"] else ""
-    fig.suptitle(f"{title_opening_name} {line_str}", color=light_text_color, fontsize=22, weight='bold', y=0.98)
+    fig.suptitle(f"{title_opening_name} {line_str}", color=light_text_color, fontsize=24, weight='bold', y=0.99)
     
-    fig.tight_layout(rect=[0.02, 0.02, 0.98, 0.94])
+    fig.tight_layout(rect=[0.03, 0.03, 0.97, 0.95])
     
     plots_dir = "plots"
     os.makedirs(plots_dir, exist_ok=True)
     filename = f"{'_'.join(args.moves).replace(' ', '_')}_{args.speed}.png"
     filepath = os.path.join(plots_dir, filename)
     plt.savefig(filepath, dpi=150, facecolor=fig.get_facecolor())
-    print(colorize(f"Plot saved to: {filepath}", Colors.GREEN))
     plt.show()
     
 def run_batch_plot_mode(args):

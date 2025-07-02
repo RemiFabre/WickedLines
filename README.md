@@ -1,7 +1,7 @@
 # WickedLines – Chess Opening Reachability & Value Explorer
 
 ![plots/e4_e5_f4_rapid.png](plots/e4_e5_f4_rapid.png)
-![plots/e4_c6_rapid.png](plots/e4_c6_rapid.png)
+![plots/e4_e6_rapid.png](plots/e4_e6_rapid.png)
 
 
 WickedLines is a command-line tool for analyzing chess opening lines using the Lichess game database. It has three primary modes:
