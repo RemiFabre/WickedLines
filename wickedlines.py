@@ -41,17 +41,23 @@ BATCH_OPENINGS = [
     {'name': 'Philidor Defense', 'moves': 'e4 e5 Nf3 d6'},
     {'name': 'Pirc Defense', 'moves': 'e4 d6 d4 Nf6 Nc3 g6'},
     {'name': 'Scotch Game', 'moves': 'e4 e5 Nf3 Nc6 d4'},
+    {'name': "King's Gambit", 'moves': 'e4 e5 f4'},
     # 1.d4 Openings
     {'name': 'Dutch Defense', 'moves': 'd4 f5'},
     {'name': "Queen's Gambit", 'moves': 'd4 d5 c4'},
-    {'name': "King's Indian Defense", 'moves': 'd4 Nf6 c4 g6'},
+    {'name': "Queen's Gambit Accepted", 'moves': 'd4 d5 c4 dxc4'},
     {'name': 'Slav Defense', 'moves': 'd4 d5 c4 c6'},
+    {'name': 'London System', 'moves': 'd4 d5 Bf4'},
+    {'name': "King's Indian Defense", 'moves': 'd4 Nf6 c4 g6'},
     {'name': 'Nimzo-Indian Defense', 'moves': 'd4 Nf6 c4 e6 Nc3 Bb4'},
     {'name': 'Grünfeld Defense', 'moves': 'd4 Nf6 c4 g6 Nc3 d5'},
+    {'name': 'Catalan Opening', 'moves': 'd4 Nf6 c4 e6 g3'},
+    {'name': 'Modern Benoni', 'moves': 'd4 Nf6 c4 c5 d5 e6'},
     # Other Openings
     {'name': 'English Opening', 'moves': 'c4'},
     {'name': 'Réti Opening', 'moves': 'Nf3 d5 c4'},
 ]
+
 
 # --- Global State & Classes ---
 class Colors:
@@ -313,113 +319,143 @@ def get_stats_for_line(moves, speed, rating_bracket):
     ev = (final_data.get('white', 0) - final_data.get('black', 0)) / final_pos_total_games * 100 if final_pos_total_games > 0 else 0
     return ev, reachability * 100, popularity * 100, root_ev, line_name, forcing_player
 
-def run_plot_mode(args, show_plot=True):
-    if show_plot:
-        print(colorize(f"\nGenerating plot for line: {' '.join(args.moves)}", Colors.YELLOW))
-        print(f"Fixed Time Control: {args.speed}")
-        print("Querying Lichess database for ELO brackets. This may take a moment...")
+def run_plot_mode(args):
+    print(colorize(f"\nGenerating plot for line: {' '.join(args.moves)}", Colors.YELLOW))
+    print(f"Fixed Time Control: {args.speed}")
+    print("Querying Lichess database for Elo brackets. This may take a moment...")
 
-    player_advantage_values, baseline_advantage_values, reachability_values, popularity_values = [], [], [], []
+    (elo_gain_values, baseline_elo_gain_values, reachability_values,
+     popularity_values, theory_advantage_values) = [], [], [], [], []
     final_line_name = "Unknown Opening"
     forcing_player = "White"
     numeric_elo_ratings = [int(r.replace('2500', '2600')) for r in PLOT_ELO_BRACKETS]
+    ELO_FACTOR = 6
 
     for i, rating in enumerate(PLOT_ELO_BRACKETS):
+        # get_stats_for_line returns ev as a percentage score (e.g., 5.0 for +5%)
         ev, reach, pop, root_ev, line_name, player = get_stats_for_line(args.moves, args.speed, rating)
         
+        # Invert the score for Black's perspective
         player_advantage = ev if player == 'White' else ev * -1
         baseline_advantage = root_ev if player == 'White' else root_ev * -1
         
-        player_advantage_values.append(player_advantage)
-        baseline_advantage_values.append(baseline_advantage)
+        # Correctly calculate Elo gain over 100 games
+        # (Win% - Loss%) * Elo_Factor = Elo Gain / 100 Games
+        elo_gain_values.append(player_advantage * ELO_FACTOR)
+        baseline_elo_gain_values.append(baseline_advantage * ELO_FACTOR)
+        
+        theory_advantage_values.append((reach / pop) if pop > 0 else 0)
         reachability_values.append(reach)
         popularity_values.append(pop)
+
         if line_name != "Unknown Opening": final_line_name = line_name
         forcing_player = player
-        if show_plot:
-            print(f"  ({i+1}/{len(PLOT_ELO_BRACKETS)}) Processed {rating} ELO... Player Advantage: {player_advantage:+.1f}, Reachability: {reach:.2f}%, Popularity: {pop:.2f}%")
+        print(f"  ({i+1}/{len(PLOT_ELO_BRACKETS)}) Processed {rating} Elo... Elo Gain/100: {elo_gain_values[-1]:+.2f}")
 
-    if show_plot:
-        print(colorize("\nData collection complete. Generating final plot...", Colors.GREEN))
+    print(colorize("\nData collection complete. Generating final plot...", Colors.GREEN))
 
-    plt.style.use('seaborn-v0_8-whitegrid')
-    fig, (ax1, ax2, ax3) = plt.subplots(
-        nrows=3, ncols=1, figsize=(15, 12), sharex=True,
-        gridspec_kw={'height_ratios': [3, 1, 1], 'hspace': 0.15}
-    )
-    fig.set_facecolor('white')
+    # --- Plotting with the new 1+2 layout ---
+    plt.style.use('seaborn-v0_8-darkgrid')
+    fig = plt.figure(figsize=(16, 12))
+    fig.set_facecolor('#2E2E2E')
 
-    color_adv = '#0057b8'
-    color_reach = '#e34234'
-    color_pop = '#9467bd'
-    color_base = '#555555'
+    # Define the grid layout
+    gs = fig.add_gridspec(3, 2, height_ratios=[3, 2, 1.8], width_ratios=(1,1), hspace=0.5, wspace=0.3)
+    ax1 = fig.add_subplot(gs[0, :]) # Top-row plot
+    ax2 = fig.add_subplot(gs[1, 0]) # Bottom-left plot
+    ax3 = fig.add_subplot(gs[1, 1]) # Bottom-right plot
+    text_ax = fig.add_subplot(gs[2, 0]) # Area for text
+    logo_ax = fig.add_subplot(gs[2, 1]) # Area for logo
 
-    # Top Plot: Player's Advantage & Baseline
-    ax1.set_ylabel("Player's Advantage", color=color_adv, fontsize=14, weight='bold')
-    p1, = ax1.plot(numeric_elo_ratings, player_advantage_values, 'o-', color=color_adv, label="Player's Advantage", markersize=7, linewidth=2.5)
-    p2, = ax1.plot(numeric_elo_ratings, baseline_advantage_values, linestyle='-.', color=color_base, label=f"Average {forcing_player} advantage", linewidth=1.5)
-    ax1.tick_params(axis='y', labelcolor=color_adv, labelsize=11)
-    ax1.axhline(0, color='black', linestyle='--', linewidth=1.0, alpha=0.7)
-    ax1.grid(True, which='major', axis='y', linestyle=':', linewidth=0.7)
-    ax1.grid(True, which='major', axis='x', linestyle=':', linewidth=0.7)
+    color_elo = '#57A8D8'
+    color_reach = '#F07C32'
+    color_pop = '#C875C4'
+    color_theory = '#4ECDC4'
+    color_base = '#B0B0B0'
+    light_text_color = '#D3D3D3'
 
-    # Middle Plot: Reachability
-    ax2.set_ylabel('Reachability %', color=color_reach, fontsize=12, weight='bold')
-    p3, = ax2.plot(numeric_elo_ratings, reachability_values, 's--', color=color_reach, label=f'Reachability % (If {forcing_player} Wants)', markersize=6, linewidth=2.0)
-    ax2.tick_params(axis='y', labelcolor=color_reach, labelsize=11)
+    for ax in [ax1, ax2, ax3]:
+        ax.set_facecolor('#2E2E2E')
+        for spine in ax.spines.values(): spine.set_edgecolor('gray')
+        ax.tick_params(axis='y', colors=light_text_color, labelsize=10)
+        ax.tick_params(axis='x', colors=light_text_color, labelsize=10, rotation=30, pad=5)
+        ax.grid(True, which='major', axis='both', linestyle=':', linewidth=0.7, alpha=0.5)
+
+    # Plot 1: Performance
+    ax1.set_title("Performance", color=light_text_color, fontsize=16, weight='bold')
+    ax1.set_ylabel("Exp. Elo Gain / 100 Games", color=color_elo, fontsize=11, weight='bold')
+    ax1.plot(numeric_elo_ratings, elo_gain_values, 'o-', color=color_elo, label="Expected Elo Gain / 100 Games", markersize=6)
+    ax1.plot(numeric_elo_ratings, baseline_elo_gain_values, linestyle='-.', color=color_base, label=f"Average {forcing_player} Elo Gain", linewidth=2)
+    ax1.axhline(0, color='lightgray', linestyle='--', linewidth=1.0, alpha=0.7)
+    ax1.legend(facecolor='#424242', edgecolor='gray', labelcolor=light_text_color, fontsize=10)
+    plt.setp(ax1.get_xticklabels(), rotation=0)
+
+    # Plot 2: Reachability & Popularity
+    ax2.set_title("Reachability & Popularity", color=light_text_color, fontsize=14, weight='bold')
+    ax2.set_ylabel('Reachability %', color=color_reach, fontsize=11)
+    ax2.plot(numeric_elo_ratings, reachability_values, 's--', color=color_reach, markersize=5)
     ax2.set_ylim(bottom=0)
-    ax2.grid(True, which='major', axis='both', linestyle=':', linewidth=0.7)
+    ax2_twin = ax2.twinx()
+    ax2_twin.set_ylabel('Popularity %', color=color_pop, fontsize=11)
+    ax2_twin.plot(numeric_elo_ratings, popularity_values, 'd:', color=color_pop, markersize=5)
+    ax2_twin.spines['right'].set_edgecolor('gray')
+    ax2_twin.tick_params(axis='y', colors=light_text_color, labelsize=10)
+    ax2_twin.set_ylim(bottom=0)
 
-    # Bottom Plot: Popularity
-    ax3.set_ylabel('Popularity %', color=color_pop, fontsize=12, weight='bold')
-    p4, = ax3.plot(numeric_elo_ratings, popularity_values, 'd:', color=color_pop, label='Popularity % (Raw)', markersize=6, linewidth=2.0)
-    ax3.tick_params(axis='y', labelcolor=color_pop, labelsize=11)
+    # Plot 3: Theory Advantage
+    ax3.set_title("Theory Advantage", color=light_text_color, fontsize=14, weight='bold')
+    ax3.set_ylabel('Advantage Ratio (x)', color=color_theory, fontsize=11)
+    ax3.plot(numeric_elo_ratings, theory_advantage_values, '*-', color=color_theory, markersize=6)
     ax3.set_ylim(bottom=0)
-    ax3.grid(True, which='major', axis='both', linestyle=':', linewidth=0.7)
 
-    ax3.set_xlabel('ELO Rating Bracket', fontsize=12, labelpad=10)
-    plt.xticks(numeric_elo_ratings, labels=PLOT_ELO_BRACKETS, rotation=30, ha='right')
-
-    # Titles, Legend, and Text
-    line_str = ' '.join(args.moves)
-    title_opening_name = f"({final_line_name})" if final_line_name not in ["Unknown Opening", "N/A"] else ""
-    fig.suptitle(f"Performance Analysis for: {line_str} {title_opening_name}", fontsize=20, weight='bold', y=0.98)
-    ax1.set_title(f"Based on Lichess {args.speed.title()} Games", fontsize=14, pad=10)
-
-    handles = [p1, p2, p3, p4]
-    labels = [h.get_label() for h in handles]
-    fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.28), ncol=2, fontsize=12, frameon=True, shadow=True)
-
-    fig.subplots_adjust(bottom=0.4, top=0.92, left=0.08, right=0.92)
-    adv_expl = f"Player's Advantage: The statistical score from the perspective of {forcing_player}. Positive is always good for them."
-    base_expl = f"Average {forcing_player} advantage: The average starting advantage for that player in any game in that ELO bracket."
+    # Area 4: Text Explanations
+    text_ax.axis('off')
+    if forcing_player == 'White':
+        elo_formula = f"(White Win % - Black Win %) * {ELO_FACTOR} * 100"
+    else:
+        elo_formula = f"(Black Win % - White Win %) * {ELO_FACTOR} * 100"
+    
+    adv_expl = f"Expected Elo Gain over 100 games playing this line: `{elo_formula}`. Positive is good for {forcing_player}."
+    base_expl = f"Average {forcing_player} Elo Gain: The average Elo gain for {forcing_player} over 100 games."
     reach_expl = f"Reachability %: Chance to reach this position if {forcing_player} actively tries to play this line."
     pop_expl = "Popularity %: Raw percentage of all games that follow this exact sequence of moves."
+    theory_expl = "Theory Advantage: Ratio of Reachability to Popularity. High value suggests a surprise weapon where preparation is highly efficient."
 
-    fig.text(0.5, 0.14, adv_expl, ha='center', va='bottom', fontsize=11)
-    fig.text(0.5, 0.10, base_expl, ha='center', va='bottom', fontsize=11)
-    fig.text(0.5, 0.06, reach_expl, ha='center', va='bottom', fontsize=11)
-    fig.text(0.5, 0.02, pop_expl, ha='center', va='bottom', fontsize=11)
+    full_explanation = f"{adv_expl}\n\n{base_expl}\n\n{reach_expl}\n\n{pop_expl}\n\n{theory_expl}"
+    text_ax.text(0.05, 0.95, full_explanation, ha='left', va='top', fontsize=11, color=light_text_color, linespacing=1.6)
+    
+    # Area 5: Logo
+    logo_ax.axis('off')
+    logo_filename = f"{''.join(args.moves)}_logo.png"
+    if os.path.exists(logo_filename):
+        try:
+            img = plt.imread(logo_filename)
+            logo_ax.imshow(img)
+        except Exception as e:
+            print(colorize(f"Warning: Could not load logo '{logo_filename}': {e}", Colors.YELLOW))
 
+    # Global Title
+    line_str = f"({' '.join(args.moves)})"
+    title_opening_name = final_line_name if final_line_name not in ["Unknown Opening", "N/A"] else ""
+    fig.suptitle(f"{title_opening_name} {line_str}", color=light_text_color, fontsize=22, weight='bold', y=0.98)
+    
+    fig.tight_layout(rect=[0.02, 0.02, 0.98, 0.94])
+    
     plots_dir = "plots"
     os.makedirs(plots_dir, exist_ok=True)
     filename = f"{'_'.join(args.moves).replace(' ', '_')}_{args.speed}.png"
     filepath = os.path.join(plots_dir, filename)
-    plt.savefig(filepath, dpi=150)
+    plt.savefig(filepath, dpi=150, facecolor=fig.get_facecolor())
+    print(colorize(f"Plot saved to: {filepath}", Colors.GREEN))
+    plt.show()
     
-    if show_plot:
-        plt.show()
-    else:
-        plt.close(fig) # Important for batch mode to avoid showing plots
-
 def run_batch_plot_mode(args):
-    """Generates plots for a predefined list of openings."""
     total_openings = len(BATCH_OPENINGS)
     print(colorize(f"Starting batch plot generation for {total_openings} openings...", Colors.YELLOW))
     print(f"Plots will be saved to the '{os.path.join(os.getcwd(), 'plots')}' directory.")
     
     for i, opening in enumerate(BATCH_OPENINGS):
-        print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", "WHITE"))
+        print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE))
         plot_args = argparse.Namespace(moves=opening['moves'].split(), speed=args.speed)
         try:
             run_plot_mode(plot_args, show_plot=False)
@@ -427,7 +463,7 @@ def run_batch_plot_mode(args):
         except Exception as e:
             print(colorize(f"Failed to generate plot for {opening['name']}: {e}", Colors.RED))
         
-        time.sleep(1) # Be friendly to the API
+        time.sleep(1)
 
     print(colorize("\nBatch plot generation complete.", Colors.YELLOW))
 

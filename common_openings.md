@@ -6,6 +6,7 @@ Moves	Opening Name
 1.e4 d5	Scandinavian Defense
 1.e4 Nf6	Alekhine's Defense
 1.e4 g6	Modern Defense
+1.e4 e5 2.f4 King's Gambit
 1.e4 e5 2.Nf3 Nc6 3.Bc4	Italian Game
 1.e4 e5 2.Nf3 Nc6 3.Bb5	Ruy López
 1.e4 e5 2.Nc3	Vienna Game
@@ -17,6 +18,7 @@ Moves	Opening Name
 Moves	Opening Name
 1.d4 f5	Dutch Defense
 1.d4 d5 2.c4	Queen's Gambit
+1.d4 d5 2.Bf4	London System
 1.d4 Nf6 2.c4 g6	King's Indian Defense
 1.d4 d5 2.c4 c6	Slav Defense
 1.d4 Nf6 2.c4 e6 3.Nc3 Bb4	Nimzo-Indian Defense
