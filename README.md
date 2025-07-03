@@ -1,6 +1,9 @@
 # WickedLines – Chess Opening Reachability & Value Explorer
 
-![plots/d4_d5_c4_rapid/d4_d5_c4_rapid_performance.png](plots/d4_d5_c4_rapid/d4_d5_c4_rapid_performance.png)
+<div align="center">
+  <img src="plots/d4_d5_c4_rapid/d4_d5_c4_rapid_performance.png"  width="420" alt="Performance Chart">
+  <img src="plots/d4_d5_c4_rapid/d4_d5_c4_rapid_popularity.png"  width="420" alt="Popularity Chart">
+</div>
 
 
 WickedLines is a command-line tool for analyzing chess opening lines using the Lichess game database. It has three primary modes:
@@ -156,7 +159,3 @@ The figure is split into two charts that share the same ELO x-axis for easy comp
 *   **Popularity % (Raw):** This purple dotted line gets its own chart to make its typically smaller values clearly visible. It shows how often the line appears in the database out of all total games.
 
 This layout allows for a clear, uncluttered view of the key metrics, helping you understand not only if an opening is good, but also how practical and common it is at different skill levels.
-
-![plots/d4_d5_c4_rapid/d4_d5_c4_rapid_popularity.png](plots/d4_d5_c4_rapid/d4_d5_c4_rapid_popularity.png)
-![plots/d4_d5_c4_rapid/d4_d5_c4_rapid_reachability.png](plots/d4_d5_c4_rapid/d4_d5_c4_rapid_reachability.png)
-![plots/d4_d5_c4_rapid/d4_d5_c4_rapid_prepefficiency.png](plots/d4_d5_c4_rapid/d4_d5_c4_rapid_prepefficiency.png)
