@@ -451,7 +451,7 @@ def run_plot_mode(args):
 
         # put explanation inside legend for non-perf charts
         if not is_perf:
-            expl = {"Reachability": "Chance Black can steer into this line",
+            expl = {"Reachability": f"Chance {player} can steer into this line",
                     "Popularity":  "Raw share of games with this move-order",
                     "Prep Efficiency": "Higher → stronger surprise-weapon potential"}[title]
             ax.plot([], [], ' ', label=expl)
@@ -461,7 +461,7 @@ def run_plot_mode(args):
                   labelcolor=C["txt"], loc="upper right")
 
         # tiny credit
-        ax.text(*CREDIT_XY, "Created with the open-source tool Wicked Lines",
+        ax.text(*CREDIT_XY, "Created with open-source tool WickedLines. Come contribute!",
                 transform=ax.transAxes, color=C["cap"],
                 fontsize=CREDIT_SIZE, ha="left", va="bottom")
 
