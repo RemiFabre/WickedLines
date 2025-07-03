@@ -395,7 +395,7 @@ def run_plot_mode(args):
         ax.text(0, .32, f"({' '.join(args.moves)}) — {args.speed.capitalize()}",
                 color=C["txt"], fontsize=18, weight="semibold")
         ax.text(0, .10, title, color=col, fontsize=22, weight="bold")
-        logo = f"{''.join(args.moves)}_logo.png"
+        logo = f"./logos/{''.join(args.moves)}_logo.png"
         if os.path.exists(logo):
             try:
                 box = ax.inset_axes(LOGO_BOX)
