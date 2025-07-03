@@ -480,7 +480,7 @@ def run_batch_plot_mode(args):
         print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE))
         plot_args = argparse.Namespace(moves=opening['moves'].split(), speed=args.speed)
         try:
-            run_plot_mode(plot_args, show_plot=False)
+            run_plot_mode(plot_args)
             print(colorize(f"Successfully generated plot for {opening['name']}.", Colors.GREEN))
         except Exception as e:
             print(colorize(f"Failed to generate plot for {opening['name']}: {e}", Colors.RED))
