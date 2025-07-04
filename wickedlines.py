@@ -8,6 +8,7 @@ import signal
 import sys
 import os
 import re
+import json # Added for disk caching
 from urllib.parse import quote
 from tabulate import tabulate
 from collections import namedtuple, deque
@@ -69,10 +70,24 @@ class APIManager:
         self.base_url = "https://explorer.lichess.ovh/lichess"
         self.cache = {}
         self.call_count = 0
-    def query(self, fen, speeds, ratings):
+        self.cache_dir = ".wickedlines_cache"
+        os.makedirs(self.cache_dir, exist_ok=True)
+    def _get_cache_filepath(self, fen, speeds, ratings):
+        safe_fen = fen.replace('/', '_')
+        safe_key = f"{safe_fen}__{speeds}__{ratings}".replace(',', '_')
+        return os.path.join(self.cache_dir, f"{safe_key}.json")
+    def query(self, fen, speeds, ratings, force_refresh=False):
         cache_key = f"{fen}|{speeds}|{ratings}"
         if cache_key in self.cache:
             return self.cache[cache_key]
+        filepath = self._get_cache_filepath(fen, speeds, ratings)
+        if not force_refresh and os.path.exists(filepath):
+            try:
+                with open(filepath, 'r') as f: data = json.load(f)
+                self.cache[cache_key] = data
+                return data
+            except (json.JSONDecodeError, IOError) as e:
+                print(f"\n{colorize(f'[WARN] Could not read cache file {os.path.basename(filepath)}: {e}', Colors.YELLOW)}")
         params = {"fen": fen, "variant": "standard", "speeds": speeds, "ratings": ratings}
         while True:
             self.call_count += 1
@@ -80,6 +95,10 @@ class APIManager:
                 r = requests.get(self.base_url, params=params)
                 if r.status_code == 429: print(f"\n{colorize('[INFO] Rate limit hit. Waiting 60s...', Colors.YELLOW)}"); time.sleep(60); continue
                 r.raise_for_status(); data = r.json()
+                try:
+                    with open(filepath, 'w') as f: json.dump(data, f, indent=2)
+                except IOError as e:
+                    print(f"\n{colorize(f'[WARN] Could not write to cache file {filepath}: {e}', Colors.YELLOW)}")
                 self.cache[cache_key] = data
                 return data
             except requests.exceptions.RequestException as e: print(f"\n{colorize('[ERROR] API request failed: ' + str(e), Colors.RED)}"); return None
@@ -113,10 +132,10 @@ def calculate_p_value(move_stats, other_stats):
     except ValueError: return 1.0
 
 # --- "Line" Mode Logic ---
-def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=None):
+def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=None, force_refresh=False):
     headers = ["Move", "Played by", "Games", "p-value", "EV (×100)", "Raw %", "Move %", "If White Wants %", "If Black Wants %"]
     rows, board, white_wants, black_wants = [], chess.Board(), 1.0, 1.0
-    root_data = api_manager.query(board.fen(), speeds, ratings)
+    root_data = api_manager.query(board.fen(), speeds, ratings, force_refresh=force_refresh)
     if not root_data or "white" not in root_data: return 0,0,'W',[], ""
     root_total = sum(root_data.get(k,0) for k in ['white','draws','black'])
     if root_total == 0: return 0,0,'W',[], ""
@@ -138,7 +157,7 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
         if played_by == "W": black_wants *= move_pct
         else: white_wants *= move_pct
         board.push_san(move_san)
-        current_data = api_manager.query(board.fen(), speeds, ratings)
+        current_data = api_manager.query(board.fen(), speeds, ratings, force_refresh=force_refresh)
         if not current_data: break
         total = sum(current_data.get(k,0) for k in ['white','draws','black'])
         if total == 0: break
@@ -188,25 +207,25 @@ def run_line_mode(args):
     print(colorize(f"\nAnalyzing line: {' '.join(args.moves) or '(start)'}", Colors.YELLOW))
     print(f"Speeds: {args.speeds} | Ratings: {args.ratings}")
     interesting_move = getattr(args, 'interesting_move_san', None)
-    white_reach, black_reach, _, _, line_name = print_line_reachability_stats(args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move)
+    white_reach, black_reach, _, _, line_name = print_line_reachability_stats(args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move, force_refresh=args.force_refresh)
     final_fen, final_turn = get_fen_from_san_sequence(args.moves)
     if not final_fen: return 1.0, 1.0, ""
-    data = api_manager.query(final_fen, args.speeds, args.ratings)
+    data = api_manager.query(final_fen, args.speeds, args.ratings, force_refresh=args.force_refresh)
     if data:
         print()
         print_move_stats(final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD)
     return white_reach/100, black_reach/100, line_name
 
 # --- "Hunt" Mode Logic ---
-def find_interesting_lines_iterative(initial_board, initial_moves, start_white_prob, start_black_prob, speeds, ratings, config, max_finds):
+def find_interesting_lines_iterative(initial_board, initial_moves, start_white_prob, start_black_prob, speeds, ratings, config, max_finds, force_refresh=False):
     stack = [(initial_board.fen(), initial_moves, None, start_white_prob, start_black_prob, len(initial_moves))]
     visited_nodes, found_count = 0, 0
     parent_board = chess.Board()
     if initial_moves:
         for move in initial_moves[:-1]: parent_board.push_san(move)
-        stack[0] = stack[0][:2] + (api_manager.query(parent_board.fen(), speeds, ratings),) + stack[0][3:]
+        stack[0] = stack[0][:2] + (api_manager.query(parent_board.fen(), speeds, ratings, force_refresh=force_refresh),) + stack[0][3:]
     else:
-        stack[0] = stack[0][:2] + (api_manager.query(initial_board.fen(), speeds, ratings),) + stack[0][3:]
+        stack[0] = stack[0][:2] + (api_manager.query(initial_board.fen(), speeds, ratings, force_refresh=force_refresh),) + stack[0][3:]
 
     while stack:
         if max_finds and found_count >= max_finds:
@@ -217,7 +236,7 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
         visited_nodes += 1
         indent = "  " * (depth - len(initial_moves))
         print(f"\r{indent}{colorize(f'[{visited_nodes: >3}|{len(stack): >3}]', Colors.GRAY)} Searching: {' '.join(move_history) or '(start)'}...", " " * 20, end="")
-        current_data = api_manager.query(fen, speeds, ratings)
+        current_data = api_manager.query(fen, speeds, ratings, force_refresh=force_refresh)
         if not current_data: continue
         total_games = sum(current_data.get(k, 0) for k in ['white', 'draws', 'black'])
         is_white_turn = board.turn == chess.WHITE
@@ -250,7 +269,7 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
                     title = f" FOUND OPPORTUNITY FOR {player_name} #{found_count} | ΔEV: {delta_ev:+.1f} | ELO Gain/100: {elo_gain:+.2f} "
                     print()
                     print(colorize("\n" + title.center(85, "="), Colors.BLUE))
-                    run_line_mode(argparse.Namespace(moves=full_line_moves, speeds=speeds, ratings=ratings, interesting_move_san=move_data['san']))
+                    run_line_mode(argparse.Namespace(moves=full_line_moves, speeds=speeds, ratings=ratings, interesting_move_san=move_data['san'], force_refresh=force_refresh))
                     print(colorize("="*85, Colors.BLUE) + "\n")
         for move_to_explore in reversed(sorted_moves[:config.BRANCH_FACTOR]):
             new_board = board.copy()
@@ -268,13 +287,13 @@ def run_hunt_mode(args):
     print(f"Config: Min Games={config.MIN_GAMES}, Min Reach%={config.MIN_REACH_PCT}, ΔEV>|{config.DELTA_EV_THRESHOLD}|, p<{config.P_VALUE_THRESHOLD}, Branch={config.BRANCH_FACTOR}, ELO Gain Factor={config.ELO_PER_POINT}")
     board, start_white_prob, start_black_prob, line_name = chess.Board(), 1.0, 1.0, ""
     if args.moves:
-        start_white_prob, start_black_prob, line_name = run_line_mode(argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings))
+        start_white_prob, start_black_prob, line_name = run_line_mode(argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings, force_refresh=args.force_refresh))
         for move in args.moves:
             try: board.push_san(move)
             except ValueError: return
     interrupted_line_name = line_name
     print(f"\n--- Starting Hunt from position: {' '.join(args.moves) or '(start)'} ---")
-    find_interesting_lines_iterative(board, args.moves, start_white_prob, start_black_prob, args.speeds, args.ratings, config, args.max_finds)
+    find_interesting_lines_iterative(board, args.moves, start_white_prob, start_black_prob, args.speeds, args.ratings, config, args.max_finds, force_refresh=args.force_refresh)
     hunt_duration = time.time() - hunt_start_time
     print(colorize("\n--- Hunt Complete ---", Colors.BLUE))
     if found_lines:
@@ -282,11 +301,11 @@ def run_hunt_mode(args):
     print(f"Total API calls made: {api_manager.call_count} (many results were served from cache)")
 
 # --- "Plot" and "Batch Plot" Mode Logic ---
-def get_stats_for_line(moves, speed, rating_bracket):
+def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
     board = chess.Board()
     white_wants, black_wants = 1.0, 1.0
     line_name = "N/A"
-    root_data = api_manager.query(board.fen(), speed, rating_bracket)
+    root_data = api_manager.query(board.fen(), speed, rating_bracket, force_refresh=force_refresh)
     if not root_data: return 0, 0, 0, 0, "API Error", "White"
     root_total_games = sum(root_data.get(k, 0) for k in ['white', 'draws', 'black'])
     if root_total_games == 0: root_total_games = 1
@@ -305,7 +324,7 @@ def get_stats_for_line(moves, speed, rating_bracket):
         if played_by == "W": black_wants *= move_pct
         else: white_wants *= move_pct
         board.push_san(move_san)
-        prev_data = api_manager.query(board.fen(), speed, rating_bracket)
+        prev_data = api_manager.query(board.fen(), speed, rating_bracket, force_refresh=force_refresh)
         if not prev_data: break
         line_name = (prev_data.get("opening") or {}).get("name", line_name)
     is_last_move_by_white = len(moves) % 2 != 0
@@ -352,7 +371,7 @@ def run_plot_mode(args):
     ELO_FACTOR = 6
     for bucket in buckets:
         ev, r_, p_, root_ev, name, player = get_stats_for_line(
-            args.moves, args.speed, str(bucket)
+            args.moves, args.speed, str(bucket), force_refresh=args.force_refresh
         )
         print(f"{colorize(f'[{bucket: >4}]', Colors.GRAY)} {args.moves} | {args.speed} | {name} | {player} | "
               f"EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | "
@@ -472,8 +491,6 @@ def run_plot_mode(args):
 
     print(f"PNG files written to {outdir}")
 
-
-    
 def run_batch_plot_mode(args):
     total_openings = len(BATCH_OPENINGS)
     print(colorize(f"Starting batch plot generation for {total_openings} openings...", Colors.YELLOW))
@@ -481,14 +498,25 @@ def run_batch_plot_mode(args):
     
     for i, opening in enumerate(BATCH_OPENINGS):
         print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE))
-        plot_args = argparse.Namespace(moves=opening['moves'].split(), speed=args.speed)
+        
+        # --- THIS IS THE CORRECTED LINE ---
+        # We now pass the force_refresh argument from the main command down to the individual plot job.
+        plot_args = argparse.Namespace(
+            moves=opening['moves'].split(), 
+            speed=args.speed, 
+            force_refresh=args.force_refresh
+        )
+        # --- END OF CHANGE ---
+
         try:
             run_plot_mode(plot_args)
             print(colorize(f"Successfully generated plot for {opening['name']}.", Colors.GREEN))
         except Exception as e:
             print(colorize(f"Failed to generate plot for {opening['name']}: {e}", Colors.RED))
         
-        time.sleep(1)
+        # No need to sleep if we are using cached data, but it's a good rate-limiting practice otherwise.
+        if args.force_refresh:
+            time.sleep(0.5)
 
     print(colorize("\nBatch plot generation complete.", Colors.YELLOW))
 
@@ -616,7 +644,7 @@ def main():
         "Default: 1600"
     ),
     )
-    
+    parser_line.add_argument("--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API.")
     parser_line.set_defaults(func=run_line_mode)
 
     parser_hunt = subparsers.add_parser('hunt', help="Recursively search for interesting opportunities and blunders.")
@@ -632,15 +660,18 @@ def main():
         ),
     )
     parser_hunt.add_argument("--max-finds", type=int, help="Stop the search after finding N interesting lines.")
+    parser_hunt.add_argument("--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API.")
     parser_hunt.set_defaults(func=run_hunt_mode)
 
     parser_plot = subparsers.add_parser('plot', help="Plot the performance of an opening across all ELO ratings.")
     parser_plot.add_argument("moves", nargs="+", help="Move list in SAN to plot (e.g., e4 c6).")
     parser_plot.add_argument("--speed", default="rapid", choices=['blitz', 'rapid', 'classical'], help="A single, fixed time control for the plot. Default: rapid.")
+    parser_plot.add_argument("--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API.")
     parser_plot.set_defaults(func=run_plot_mode)
 
     parser_batchplot = subparsers.add_parser('batchplot', help="Generate plots for a predefined list of major openings.")
     parser_batchplot.add_argument("--speed", default="rapid", choices=['blitz', 'rapid', 'classical'], help="A single, fixed time control for all plots. Default: rapid.")
+    parser_batchplot.add_argument("--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API.")
     parser_batchplot.set_defaults(func=run_batch_plot_mode)
 
     args = parser.parse_args()
