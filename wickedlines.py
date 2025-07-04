@@ -354,6 +354,9 @@ def run_plot_mode(args):
         ev, r_, p_, root_ev, name, player = get_stats_for_line(
             args.moves, args.speed, str(bucket)
         )
+        print(f"{colorize(f'[{bucket: >4}]', Colors.GRAY)} {args.moves} | {args.speed} | {name} | {player} | "
+              f"EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | "
+              f"Pop: {p_:.2f}% | Base EV: {colorize_ev(root_ev)}")
         adj, base = (ev, root_ev) if player == "White" else (-ev, -root_ev)
         elo_gain.append(adj * ELO_FACTOR)
         base_gain.append(base * ELO_FACTOR)
