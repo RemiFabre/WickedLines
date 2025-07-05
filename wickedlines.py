@@ -72,6 +72,8 @@ BATCH_OPENINGS = [
     {"name": "Réti Opening", "moves": "Nf3 d5 c4"},
 ]
 
+PLOT_COLORS = ["#57a8d8", "#f07c32", "#c875c4", "#4ecdc4", "#ffc300", "#c70039", "#aed581"]
+
 
 # --- Global State & Classes ---
 class Colors:
@@ -507,112 +509,224 @@ def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
     return ev, reachability * 100, popularity * 100, root_ev, line_name, forcing_player
 
 
-def run_plot_mode(args):
-    """
-    Generates four 1080×1920 PNGs (Performance, Reachability,
-    Popularity, Prep-Efficiency) in plots/<moves>_<speed>/.
-    """
+# --- Replace the old "run_plot_mode" function with these three new functions ---
 
-    # ---------- TWEAKABLES ---------------------------------------------
-    HEADER_FRAC = 0.20  # header height % (more room)
-    CREDIT_XY = (0.01, 0.02)  # where the tiny credit sits
-    CREDIT_SIZE = 12
-    ARROW_HEIGHT_FRAC = 0.45  # yellow arrow vertical pos
-    LOGO_BOX = [0.76, 0.00, 0.27, 1.17]  # 30 % bigger & a bit higher
-    WRAP_WIDTH = 46  # (only used for non-perf charts)
-    # -------------------------------------------------------------------
 
-    import os
+def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
+    """
+    Takes a list of move strings (e.g., ["e4 c5", "d4 d5"]) and returns
+    a list of dictionaries, each containing the full stats for one line
+    across all ELO brackets.
+    """
+    all_stats = []
+    for move_str in move_strings:
+        moves = move_str.split()
+        print(colorize(f"\nFetching data for line: {move_str}", Colors.YELLOW))
+
+        elo_gain, base_gain, reach, pop, theory = [], [], [], [], []
+        final_name, forcing_player = "Unknown Opening", "White"
+        ELO_FACTOR = 6
+
+        for bucket in PLOT_ELO_BRACKETS:
+            ev, r_, p_, root_ev, name, player = get_stats_for_line(moves, speed, str(bucket), force_refresh=force_refresh)
+            print(
+                f"{colorize(f'  [{bucket:>4}]', Colors.GRAY)} EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | Pop: {p_:.2f}% | Base EV: {colorize_ev(root_ev)}"
+            )
+            adj, base = (ev, root_ev) if player == "White" else (-ev, -root_ev)
+            elo_gain.append(adj * ELO_FACTOR)
+            base_gain.append(base * ELO_FACTOR)
+            reach.append(r_)
+            pop.append(p_)
+            theory.append(r_ / p_ if p_ else 0)
+            forcing_player = player
+            if name not in ("Unknown Opening", "N/A"):
+                final_name = name
+
+        all_stats.append(
+            {
+                "moves": moves,
+                "move_string": move_str,
+                "name": final_name,
+                "forcing_player": forcing_player,
+                "elo_gain": elo_gain,
+                "base_gain": base_gain,
+                "reach": reach,
+                "pop": pop,
+                "theory": theory,
+            }
+        )
+    return all_stats
+
+
+def generate_plots(stats_data, speed, outdir):
+    """
+    Core plotting engine. Generates 1080x1350 charts with a refined,
+    professional layout for both single and dual-logo modes.
+    """
+    import textwrap
 
     import matplotlib.pyplot as plt
     import numpy as np
     from matplotlib import patheffects as pe
     from scipy.interpolate import CubicSpline
 
-    # bucket list & mid-points
-    buckets = [int(b) for b in PLOT_ELO_BRACKETS]  # 0 … 2500
+    # --- LAYOUT TWEAKABLES & CONFIGURATION ---
+    # This is the primary place to fine-tune the plot aesthetics.
+    # 1. Default Logo Rectangles [left, bottom, width, height]
+    # These are used for any opening NOT specified in LOGO_OVERRIDES.
+    SINGLE_LOGO_RECT = [0.50, 0.15, 0.7, 0.7]
+    DUAL_LOGO1_RECT = [-0.2, 0.0, 0.7, 0.7]  # Default for left logo
+    DUAL_LOGO2_RECT = [0.5, 0.0, 0.7, 0.7]  # Default for right logo
+
+    # 2. Per-Opening Logo Overrides
+    # Add an entry here to give a specific opening a custom logo rectangle.
+    # The key is the move string (e.g., "d4 d5 c4").
+    # The value is the [left, bottom, width, height] rectangle.
+    LOGO_OVERRIDES = {
+        # Example: Make the Queen's Gambit logo bigger in single-plot mode
+        "d4 d5 c4": {
+            #  "single": [0.55, 0.20, 0.45, 0.7], # A custom rect for single view
+            # "dual_1": [0.0, 0.15, 0.4, 0.6],   # Custom rect if it's the left logo
+            # "dual_2": [0.6, 0.15, 0.4, 0.6],   # Custom rect if it's the right logo
+        },
+        "e4 e5 f4": {
+            # This opening will use the default rectangles because it's not specified
+        },
+    }
+
+    # 3. Text Positions
+    SINGLE_TEXT_X = 0.05
+    SINGLE_MAIN_TITLE_Y = 0.65
+    SINGLE_SUB_TITLE_Y = 0.45
+    SINGLE_CHART_TITLE_Y = 0.18
+    DUAL_CHART_TITLE_Y = 0.12
+    # --- END OF TWEAKABLES ---
+
+    is_comparison = len(stats_data) > 1 and len(stats_data) == 2
+
+    # Determine output directory based on opening color
+    # Use the first line to determine if it's a White or Black opening
+    # Odd number of moves = White's turn, Even = Black's turn
+    color_folder = "white" if len(stats_data[0]["moves"]) % 2 != 0 else "black"
+
+    # Define the specific folder name for this plot run, which also serves as the filename prefix
+    filename_prefix = "_vs_".join(s["move_string"].replace(" ", "_") for s in stats_data).lower() + f"_{speed}"
+
+    # Create the final output path, e.g., "plots/black/e4_c5_rapid"
+    # This now defines the 'outdir' used throughout the function.
+    outdir = os.path.join("plots", color_folder, filename_prefix)
+    os.makedirs(outdir, exist_ok=True)
+
+    buckets = [int(b) for b in PLOT_ELO_BRACKETS]
     centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])] + [2600]
     tick_labels = [str(int(c)) if c != 2600 else "2500+" for c in centres]
 
-    # fetch stats
-    elo_gain, base_gain, reach, pop, theory = [], [], [], [], []
-    final_name, forcing = "Unknown Opening", "White"
-    ELO_FACTOR = 6
-    for bucket in buckets:
-        ev, r_, p_, root_ev, name, player = get_stats_for_line(
-            args.moves, args.speed, str(bucket), force_refresh=args.force_refresh
-        )
-        print(
-            f"{colorize(f'[{bucket: >4}]', Colors.GRAY)} {args.moves} | {args.speed} | {name} | {player} | "
-            f"EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | "
-            f"Pop: {p_:.2f}% | Base EV: {colorize_ev(root_ev)}"
-        )
-        adj, base = (ev, root_ev) if player == "White" else (-ev, -root_ev)
-        elo_gain.append(adj * ELO_FACTOR)
-        base_gain.append(base * ELO_FACTOR)
-        reach.append(r_)
-        pop.append(p_)
-        theory.append(r_ / p_ if p_ else 0)
-        forcing = player
-        if name not in ("Unknown Opening", "N/A"):
-            final_name = name
+    C = dict(bg="#121212", grid="#444", txt="#e9e9e9", cap="#c7c7c7", base="#b0b0b0", arrow="#efd545")
+    charts = [
+        {
+            "title": "Performance",
+            "key": "performance",
+            "y_label": "Expected Elo gain per 100 games",
+            "color": "#57a8d8",
+            "data_key": "elo_gain",
+        },
+        {
+            "title": "Reachability",
+            "key": "reachability",
+            "y_label": "Chance to reach position (%)",
+            "color": "#f07c32",
+            "data_key": "reach",
+        },
+        {
+            "title": "Popularity",
+            "key": "popularity",
+            "y_label": "Overall popularity of line (%)",
+            "color": "#c875c4",
+            "data_key": "pop",
+        },
+        {
+            "title": "Surprise",
+            "key": "surprise",
+            "y_label": "Surprise Factor (Reachability / Popularity)",
+            "color": "#4ecdc4",
+            "data_key": "theory",
+        },
+    ]
 
-    # paths & colours
-    moves_id, speed_id = "_".join(args.moves).lower(), args.speed.lower()
-    outdir = os.path.join("plots", f"{moves_id}_{speed_id}")
-    os.makedirs(outdir, exist_ok=True)
-
-    C = dict(
-        bg="#121212",
-        grid="#444",
-        txt="#e9e9e9",
-        cap="#c7c7c7",
-        perf="#57a8d8",
-        reach="#f07c32",
-        pop="#c875c4",
-        theory="#4ecdc4",
-        base="#b0b0b0",
-        arrow="#efd545",
-    )
-
-    def save(fig, tag):
-        fig.savefig(os.path.join(outdir, f"{moves_id}_{speed_id}_{tag}.png"), facecolor=fig.get_facecolor())
+    def save(fig, tag, filename_prefix):
+        # The 'outdir' variable is now the correct, nested path.
+        filepath = os.path.join(outdir, f"{filename_prefix}_{tag}.png")
+        fig.savefig(filepath, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0.1)
         plt.close(fig)
 
-    # helpers
-    def fig_axes():
-        fig = plt.figure(figsize=(6.02, 10.666), dpi=180, facecolor=C["bg"])
-        gs = fig.add_gridspec(100, 1, left=0.08, right=0.98)
-        head = fig.add_subplot(gs[: int(HEADER_FRAC * 100), 0])
-        head.axis("off")
-        ax = fig.add_subplot(gs[int(HEADER_FRAC * 100) :, 0])
-        ax.set_facecolor(C["bg"])
-        ax.grid(True, ls=":", lw=0.7, color=C["grid"])
-        for s in ax.spines.values():
-            s.set_edgecolor(C["grid"])
-        ax.tick_params(colors=C["txt"], labelsize=13)
-        return fig, head, ax
+    def header(ax_header, title, color):
+        if is_comparison:
+            ax_header.text(
+                0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top"
+            )
+            # ax_header.text(0.5, 0.5, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
 
-    def header(ax, title, col):
-        ax.text(0, 0.78, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold")
-        ax.text(0, 0.54, final_name, color=C["txt"], fontsize=25, weight="bold")
-        ax.text(
-            0, 0.32, f"({' '.join(args.moves)}) — {args.speed.capitalize()}", color=C["txt"], fontsize=18, weight="semibold"
-        )
-        ax.text(0, 0.10, title, color=col, fontsize=22, weight="bold")
-        logo = f"./logos/{''.join(args.moves)}_logo.png"
-        if os.path.exists(logo):
-            try:
-                box = ax.inset_axes(LOGO_BOX)
-                box.imshow(plt.imread(logo))
+            line1_moves = stats_data[0]["move_string"]
+            logo1_rect = LOGO_OVERRIDES.get(line1_moves, {}).get("dual_1", DUAL_LOGO1_RECT)
+            logo1_path = f"./logos/{''.join(stats_data[0]['moves'])}_logo.png"
+            if os.path.exists(logo1_path):
+                box1 = ax_header.inset_axes(logo1_rect)
+                box1.imshow(plt.imread(logo1_path))
+                box1.axis("off")
+
+            line2_moves = stats_data[1]["move_string"]
+            logo2_rect = LOGO_OVERRIDES.get(line2_moves, {}).get("dual_2", DUAL_LOGO2_RECT)
+            logo2_path = f"./logos/{''.join(stats_data[1]['moves'])}_logo.png"
+            if os.path.exists(logo2_path):
+                box2 = ax_header.inset_axes(logo2_rect)
+                box2.imshow(plt.imread(logo2_path))
+                box2.axis("off")
+
+            ax_header.text(0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
+        else:
+            ax_header.text(
+                SINGLE_TEXT_X,
+                0.95,
+                "Chess Opening Statistics",
+                color=C["cap"],
+                fontsize=19,
+                weight="semibold",
+                ha="left",
+                va="top",
+            )
+            line_data = stats_data[0]
+            ax_header.text(
+                SINGLE_TEXT_X,
+                SINGLE_MAIN_TITLE_Y,
+                line_data["name"],
+                color=C["txt"],
+                fontsize=16,
+                weight="bold",
+                ha="left",
+                va="center",
+            )
+            sub_title = f"({' '.join(line_data['moves'])}) — {speed.capitalize()}"
+            ax_header.text(
+                SINGLE_TEXT_X,
+                SINGLE_SUB_TITLE_Y,
+                sub_title,
+                color=C["txt"],
+                fontsize=14,
+                weight="semibold",
+                ha="left",
+                va="center",
+            )
+            ax_header.text(
+                SINGLE_TEXT_X, SINGLE_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="left", va="center"
+            )
+
+            line_moves = line_data["move_string"]
+            logo_rect = LOGO_OVERRIDES.get(line_moves, {}).get("single", SINGLE_LOGO_RECT)
+            logo_path = f"./logos/{''.join(line_data['moves'])}_logo.png"
+            if os.path.exists(logo_path):
+                box = ax_header.inset_axes(logo_rect)
+                box.imshow(plt.imread(logo_path))
                 box.axis("off")
-            except Exception:
-                pass
-
-    def xaxis(ax):
-        ax.set_xticks(centres)
-        ax.set_xticklabels(tick_labels, rotation=45, ha="right", color=C["txt"])
-        ax.set_xlabel("Player rating (Elo)", labelpad=15, color=C["txt"], fontsize=16)
 
     def smooth(ax, xs, ys, col, label=None):
         cs = CubicSpline(xs, ys)
@@ -620,36 +734,52 @@ def run_plot_mode(args):
         ax.plot(dense, cs(dense), color=col, lw=2.4, label=label)
         ax.plot(xs, ys, "o", ms=7, color=col)
 
-    # chart definitions
-    charts = [
-        ("Performance", C["perf"], elo_gain, True),
-        ("Reachability", C["reach"], reach, False),
-        ("Popularity", C["pop"], pop, False),
-        ("Prep Efficiency", C["theory"], theory, False),
-    ]
+    for chart_info in charts:
+        fig = plt.figure(figsize=(6, 7.5), dpi=180, facecolor=C["bg"], constrained_layout=True)
+        gs = fig.add_gridspec(2, 1, height_ratios=[0.25, 0.75])
+        ax_header = fig.add_subplot(gs[0])
+        ax_header.axis("off")
+        ax_main = fig.add_subplot(gs[1])
+        ax_main.set_facecolor(C["bg"])
+        ax_main.grid(True, ls=":", lw=0.7, color=C["grid"])
+        for s in ax_main.spines.values():
+            s.set_edgecolor(C["grid"])
+        ax_main.tick_params(colors=C["txt"], labelsize=13, pad=8)
 
-    for title, col, data, is_perf in charts:
-        fig, head, ax = fig_axes()
-        header(head, title, col)
-        xaxis(ax)
+        header(ax_header, chart_info["title"], chart_info["color"])
+        ax_main.set_xlabel("Player rating (Lichess)", labelpad=15, color=C["txt"], fontsize=16)
+        ax_main.set_xticks(centres)
+        ax_main.set_xticklabels(tick_labels, rotation=45, ha="right", color=C["txt"])
 
-        if not is_perf:
-            pad = max(data) * 0.10
-            ax.set_ylim(min(data) - pad, max(data) + pad)
+        all_data = []
+        for j, line_data in enumerate(stats_data):
+            if is_comparison:
+                color = PLOT_COLORS[j % len(PLOT_COLORS)]
+            else:
+                color = chart_info["color"]
+            data = line_data[chart_info["data_key"]]
+            all_data.extend(data)
+            label = f"{line_data['name']} ({line_data['move_string']})"
+            smooth(ax_main, centres, data, color, label=label)
 
-        # main curve
-        main_label = "Elo Gain (per 100 games)" if is_perf else None
-        smooth(ax, centres, data, col, label=main_label)
+        if chart_info["key"] == "performance":
+            base_gain_data = stats_data[0]["base_gain"]
+            all_data.extend(base_gain_data)
+            base_label = f"Baseline (avg. {stats_data[0]['forcing_player']} perf.)"
+            smooth(ax_main, centres, base_gain_data, C["base"], label=base_label)
 
-        # extras for Performance
-        if is_perf:
-            base_label = f"Baseline (avg. {forcing} performance)"
-            smooth(ax, centres, base_gain, C["base"], label=base_label)
+        pad = (max(all_data) - min(all_data)) * 0.1 if all_data else 0.1
+        ax_main.set_ylim(min(all_data) - pad - 0.1, max(all_data) + pad + 0.1)
+        ax_main.text(
+            0.02, 0.98, chart_info["y_label"], transform=ax_main.transAxes, color=C["txt"], fontsize=14, ha="left", va="top"
+        )
+
+        if chart_info["key"] == "performance":
             mid = len(centres) // 2
-            ax.annotate(
-                "above baseline → better",
-                xy=(centres[mid], base_gain[mid]),
-                xytext=(centres[mid], ax.get_ylim()[0] + ARROW_HEIGHT_FRAC * (ax.get_ylim()[1] - ax.get_ylim()[0])),
+            ax_main.annotate(
+                "above this line means better than average",
+                xy=(centres[mid], base_gain_data[mid]),
+                xytext=(centres[mid], ax_main.get_ylim()[0] + 0.45 * (ax_main.get_ylim()[1] - ax_main.get_ylim()[0])),
                 arrowprops=dict(
                     arrowstyle="-|>", color=C["arrow"], lw=1.2, path_effects=[pe.withStroke(linewidth=3, foreground=C["bg"])]
                 ),
@@ -658,32 +788,30 @@ def run_plot_mode(args):
                 ha="center",
             )
 
-        # put explanation inside legend for non-perf charts
-        if not is_perf:
-            expl = {
-                "Reachability": f"Chance {player} can steer into this line",
-                "Popularity": "Raw share of games with this move-order",
-                "Prep Efficiency": "Higher → stronger surprise-weapon potential",
-            }[title]
-            ax.plot([], [], " ", label=expl)
+        ax_main.legend(facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="lower left", fancybox=True)
+        fig.supxlabel("Created with open source tool WickedLines, join the project!", color=C["cap"], fontsize=12)
+        save(fig, chart_info["key"], filename_prefix)
 
-        # legend
-        ax.legend(facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="upper right")
+    print(f"\nPNG files written to {outdir}")
 
-        # tiny credit
-        ax.text(
-            *CREDIT_XY,
-            "Created with open-source tool WickedLines. Come contribute!",
-            transform=ax.transAxes,
-            color=C["cap"],
-            fontsize=CREDIT_SIZE,
-            ha="left",
-            va="bottom",
-        )
 
-        save(fig, title.lower().replace(" ", ""))
+def run_plot_mode(args):
+    """Handler for the 'plot' command."""
+    move_string = " ".join(args.moves)
+    stats_data = fetch_stats_for_lines([move_string], args.speed, args.force_refresh)
+    moves_id = "_".join(args.moves).lower()
+    speed_id = args.speed.lower()
+    outdir = os.path.join("plots", f"{moves_id}_{speed_id}")
+    generate_plots(stats_data, args.speed, outdir)
 
-    print(f"PNG files written to {outdir}")
+
+def run_compare_mode(args):
+    """Handler for the 'compare' command."""
+    stats_data = fetch_stats_for_lines(args.move_strings, args.speed, args.force_refresh)
+    filename_prefix = "_vs_".join(s.replace(" ", "_") for s in args.move_strings).lower()
+    speed_id = args.speed.lower()
+    outdir = os.path.join("plots", f"{filename_prefix}_{speed_id}")
+    generate_plots(stats_data, args.speed, outdir)
 
 
 def run_batch_plot_mode(args):
@@ -694,10 +822,8 @@ def run_batch_plot_mode(args):
     for i, opening in enumerate(BATCH_OPENINGS):
         print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE))
 
-        # --- THIS IS THE CORRECTED LINE ---
         # We now pass the force_refresh argument from the main command down to the individual plot job.
         plot_args = argparse.Namespace(moves=opening["moves"].split(), speed=args.speed, force_refresh=args.force_refresh)
-        # --- END OF CHANGE ---
 
         try:
             run_plot_mode(plot_args)
@@ -901,6 +1027,21 @@ def main():
         "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
     )
     parser_plot.set_defaults(func=run_plot_mode)
+
+    parser_compare = subparsers.add_parser("compare", help="Plot multiple openings on the same charts for comparison.")
+    parser_compare.add_argument(
+        "move_strings", nargs="+", help='Quoted, space-separated strings of moves to compare (e.g., "e4 c5" "d4 d5").'
+    )
+    parser_compare.add_argument(
+        "--speed",
+        default="rapid",
+        choices=["blitz", "rapid", "classical"],
+        help="A single, fixed time control for the plot. Default: rapid.",
+    )
+    parser_compare.add_argument(
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
+    )
+    parser_compare.set_defaults(func=run_compare_mode)
 
     parser_batchplot = subparsers.add_parser("batchplot", help="Generate plots for a predefined list of major openings.")
     parser_batchplot.add_argument(
