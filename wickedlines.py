@@ -567,25 +567,41 @@ def generate_plots(stats_data, speed, outdir):
     from matplotlib import patheffects as pe
     from scipy.interpolate import CubicSpline
 
-    # --- LAYOUT TWEAKABLES ---
-    # This section makes it easy to fine-tune the plot aesthetics.
+    # --- LAYOUT TWEAKABLES & CONFIGURATION ---
+    # This is the primary place to fine-tune the plot aesthetics.
 
-    # Single Plot Layout
-    SINGLE_TEXT_X = 0.05  # Left margin for all text
-    SINGLE_MAIN_TITLE_Y = 0.65  # Vertical position of the main opening name
-    SINGLE_SUB_TITLE_Y = 0.45  # Vertical position of the move list subtitle
-    SINGLE_CHART_TITLE_Y = 0.18 # Vertical position of the chart name (e.g., "Popularity")
-    SINGLE_LOGO_RECT = [0.55, 0.25, 0.4, 0.6]  # [left, bottom, width, height] for the logo
+    # 1. Default Logo Rectangles [left, bottom, width, height]
+    # These are used for any opening NOT specified in LOGO_OVERRIDES.
+    SINGLE_LOGO_RECT = [0.50, 0.15, 0.7, 0.7]
+    DUAL_LOGO1_RECT = [-0.2, 0.0, 0.7, 0.7]   # Default for left logo
+    DUAL_LOGO2_RECT = [0.5, 0.0, 0.7, 0.7]   # Default for right logo
 
-    # Comparison (Dual) Plot Layout
-    DUAL_VS_Y = 0.45  # Vertical position of the "vs" text
-    DUAL_CHART_TITLE_Y = 0.12 # Vertical position of the chart name (e.g., "Performance")
-    DUAL_LOGO1_RECT = [0.0, 0.15, 0.4, 0.6]  # Rect for the left logo
-    DUAL_LOGO2_RECT = [0.6, 0.15, 0.4, 0.6]  # Rect for the right logo
+    # 2. Per-Opening Logo Overrides
+    # Add an entry here to give a specific opening a custom logo rectangle.
+    # The key is the move string (e.g., "d4 d5 c4").
+    # The value is the [left, bottom, width, height] rectangle.
+    LOGO_OVERRIDES = {
+        # Example: Make the Queen's Gambit logo bigger in single-plot mode
+        "d4 d5 c4": {
+            #  "single": [0.55, 0.20, 0.45, 0.7], # A custom rect for single view
+             # "dual_1": [0.0, 0.15, 0.4, 0.6],   # Custom rect if it's the left logo
+             # "dual_2": [0.6, 0.15, 0.4, 0.6],   # Custom rect if it's the right logo
+        },
+        "e4 e5 f4": {
+            # This opening will use the default rectangles because it's not specified
+        }
+    }
+
+    # 3. Text Positions
+    SINGLE_TEXT_X = 0.05
+    SINGLE_MAIN_TITLE_Y = 0.65
+    SINGLE_SUB_TITLE_Y = 0.45
+    SINGLE_CHART_TITLE_Y = 0.18
+    DUAL_CHART_TITLE_Y = 0.12
     # --- END OF TWEAKABLES ---
 
     os.makedirs(outdir, exist_ok=True)
-    is_comparison = len(stats_data) > 1 and len(stats_data) == 2  # Optimized for 1 or 2 openings
+    is_comparison = len(stats_data) > 1 and len(stats_data) == 2
 
     buckets = [int(b) for b in PLOT_ELO_BRACKETS]
     centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])] + [2600]
@@ -605,39 +621,40 @@ def generate_plots(stats_data, speed, outdir):
         plt.close(fig)
 
     def header(ax_header, title, color):
-
         if is_comparison:
             ax_header.text(0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top")
-            # --- "Logo vs Logo" Layout ---
-            # ax_header.text(0.5, DUAL_VS_Y, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
+            # ax_header.text(0.5, 0.5, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
+
+            # --- CHANGE: Use LOGO_OVERRIDES to get custom rectangles ---
+            line1_moves = stats_data[0]["move_string"]
+            logo1_rect = LOGO_OVERRIDES.get(line1_moves, {}).get("dual_1", DUAL_LOGO1_RECT)
             logo1_path = f"./logos/{''.join(stats_data[0]['moves'])}_logo.png"
             if os.path.exists(logo1_path):
-                box1 = ax_header.inset_axes(DUAL_LOGO1_RECT)
+                box1 = ax_header.inset_axes(logo1_rect)
                 box1.imshow(plt.imread(logo1_path)); box1.axis("off")
 
+            line2_moves = stats_data[1]["move_string"]
+            logo2_rect = LOGO_OVERRIDES.get(line2_moves, {}).get("dual_2", DUAL_LOGO2_RECT)
             logo2_path = f"./logos/{''.join(stats_data[1]['moves'])}_logo.png"
             if os.path.exists(logo2_path):
-                box2 = ax_header.inset_axes(DUAL_LOGO2_RECT)
+                box2 = ax_header.inset_axes(logo2_rect)
                 box2.imshow(plt.imread(logo2_path)); box2.axis("off")
-            
-            # Chart title is centered in this mode
-            ax_header.text(0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
 
+            ax_header.text(0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
         else:
-            # --- Left-Aligned Text, Big Logo Layout ---
             ax_header.text(SINGLE_TEXT_X, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="left", va="top")
-            
             line_data = stats_data[0]
             ax_header.text(SINGLE_TEXT_X, SINGLE_MAIN_TITLE_Y, line_data["name"], color=C["txt"], fontsize=16, weight="bold", ha="left", va="center")
             sub_title = f"({' '.join(line_data['moves'])}) — {speed.capitalize()}"
             ax_header.text(SINGLE_TEXT_X, SINGLE_SUB_TITLE_Y, sub_title, color=C["txt"], fontsize=14, weight="semibold", ha="left", va="center")
-            
-            # Chart title is also left-aligned
             ax_header.text(SINGLE_TEXT_X, SINGLE_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="left", va="center")
 
+            # --- CHANGE: Use LOGO_OVERRIDES to get custom rectangle ---
+            line_moves = line_data["move_string"]
+            logo_rect = LOGO_OVERRIDES.get(line_moves, {}).get("single", SINGLE_LOGO_RECT)
             logo_path = f"./logos/{''.join(line_data['moves'])}_logo.png"
             if os.path.exists(logo_path):
-                box = ax_header.inset_axes(SINGLE_LOGO_RECT)
+                box = ax_header.inset_axes(logo_rect)
                 box.imshow(plt.imread(logo_path)); box.axis("off")
 
     def smooth(ax, xs, ys, col, label=None):
@@ -651,10 +668,8 @@ def generate_plots(stats_data, speed, outdir):
     for chart_info in charts:
         fig = plt.figure(figsize=(6, 7.5), dpi=180, facecolor=C["bg"], constrained_layout=True)
         gs = fig.add_gridspec(2, 1, height_ratios=[0.25, 0.75])
-
         ax_header = fig.add_subplot(gs[0]); ax_header.axis("off")
         ax_main = fig.add_subplot(gs[1])
-
         ax_main.set_facecolor(C["bg"]); ax_main.grid(True, ls=":", lw=0.7, color=C["grid"])
         for s in ax_main.spines.values(): s.set_edgecolor(C["grid"])
         ax_main.tick_params(colors=C["txt"], labelsize=13, pad=8)
@@ -665,10 +680,8 @@ def generate_plots(stats_data, speed, outdir):
 
         all_data = []
         for j, line_data in enumerate(stats_data):
-            if is_comparison:
-                color = PLOT_COLORS[j % len(PLOT_COLORS)]
-            else:
-                color = chart_info["color"]
+            if is_comparison: color = PLOT_COLORS[j % len(PLOT_COLORS)]
+            else: color = chart_info["color"]
             data = line_data[chart_info["data_key"]]
             all_data.extend(data)
             label = f"{line_data['name']} ({line_data['move_string']})"
@@ -695,11 +708,11 @@ def generate_plots(stats_data, speed, outdir):
             )
 
         ax_main.legend(facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="lower left", fancybox=True)
-        fig.supxlabel("Created with open source tool WickedLines, come contribute!", color=C["cap"], fontsize=12)
+        fig.supxlabel("Created with open source tool WickedLines, join the project!", color=C["cap"], fontsize=12)
         save(fig, chart_info["key"], filename_prefix)
 
     print(f"\nPNG files written to {outdir}")
-
+    
 def run_plot_mode(args):
     """Handler for the 'plot' command."""
     move_string = " ".join(args.moves)
