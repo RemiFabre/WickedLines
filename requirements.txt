@@ -1,0 +1,5 @@
+matplotlib
+python-chess
+requests
+tabulate
+scipy
