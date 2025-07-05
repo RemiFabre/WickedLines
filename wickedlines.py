@@ -74,6 +74,7 @@ BATCH_OPENINGS = [
 
 PLOT_COLORS = ["#57a8d8", "#f07c32", "#c875c4", "#4ecdc4", "#ffc300", "#c70039", "#aed581"]
 
+
 # --- Global State & Classes ---
 class Colors:
     GREEN, RED, BLUE, YELLOW, GRAY, END = "\033[92m", "\033[91m", "\033[94m", "\033[93m", "\033[90m", "\033[0m"
@@ -510,6 +511,7 @@ def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
 
 # --- Replace the old "run_plot_mode" function with these three new functions ---
 
+
 def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
     """
     Takes a list of move strings (e.g., ["e4 c5", "d4 d5"]) and returns
@@ -555,6 +557,7 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
         )
     return all_stats
 
+
 def generate_plots(stats_data, speed, outdir):
     """
     Core plotting engine. Generates 1080x1350 charts with a refined,
@@ -569,12 +572,11 @@ def generate_plots(stats_data, speed, outdir):
 
     # --- LAYOUT TWEAKABLES & CONFIGURATION ---
     # This is the primary place to fine-tune the plot aesthetics.
-
     # 1. Default Logo Rectangles [left, bottom, width, height]
     # These are used for any opening NOT specified in LOGO_OVERRIDES.
     SINGLE_LOGO_RECT = [0.50, 0.15, 0.7, 0.7]
-    DUAL_LOGO1_RECT = [-0.2, 0.0, 0.7, 0.7]   # Default for left logo
-    DUAL_LOGO2_RECT = [0.5, 0.0, 0.7, 0.7]   # Default for right logo
+    DUAL_LOGO1_RECT = [-0.2, 0.0, 0.7, 0.7]  # Default for left logo
+    DUAL_LOGO2_RECT = [0.5, 0.0, 0.7, 0.7]  # Default for right logo
 
     # 2. Per-Opening Logo Overrides
     # Add an entry here to give a specific opening a custom logo rectangle.
@@ -584,12 +586,12 @@ def generate_plots(stats_data, speed, outdir):
         # Example: Make the Queen's Gambit logo bigger in single-plot mode
         "d4 d5 c4": {
             #  "single": [0.55, 0.20, 0.45, 0.7], # A custom rect for single view
-             # "dual_1": [0.0, 0.15, 0.4, 0.6],   # Custom rect if it's the left logo
-             # "dual_2": [0.6, 0.15, 0.4, 0.6],   # Custom rect if it's the right logo
+            # "dual_1": [0.0, 0.15, 0.4, 0.6],   # Custom rect if it's the left logo
+            # "dual_2": [0.6, 0.15, 0.4, 0.6],   # Custom rect if it's the right logo
         },
         "e4 e5 f4": {
             # This opening will use the default rectangles because it's not specified
-        }
+        },
     }
 
     # 3. Text Positions
@@ -621,10 +623,34 @@ def generate_plots(stats_data, speed, outdir):
 
     C = dict(bg="#121212", grid="#444", txt="#e9e9e9", cap="#c7c7c7", base="#b0b0b0", arrow="#efd545")
     charts = [
-        {"title": "Performance", "key": "performance", "y_label": "Expected Elo gain per 100 games", "color": "#57a8d8", "data_key": "elo_gain"},
-        {"title": "Reachability", "key": "reachability", "y_label": "Chance to reach position (%)", "color": "#f07c32", "data_key": "reach"},
-        {"title": "Popularity", "key": "popularity", "y_label": "Overall popularity of line (%)", "color": "#c875c4", "data_key": "pop"},
-        {"title": "Surprise", "key": "surprise", "y_label": "Surprise Factor (Reachability / Popularity)", "color": "#4ecdc4", "data_key": "theory"},
+        {
+            "title": "Performance",
+            "key": "performance",
+            "y_label": "Expected Elo gain per 100 games",
+            "color": "#57a8d8",
+            "data_key": "elo_gain",
+        },
+        {
+            "title": "Reachability",
+            "key": "reachability",
+            "y_label": "Chance to reach position (%)",
+            "color": "#f07c32",
+            "data_key": "reach",
+        },
+        {
+            "title": "Popularity",
+            "key": "popularity",
+            "y_label": "Overall popularity of line (%)",
+            "color": "#c875c4",
+            "data_key": "pop",
+        },
+        {
+            "title": "Surprise",
+            "key": "surprise",
+            "y_label": "Surprise Factor (Reachability / Popularity)",
+            "color": "#4ecdc4",
+            "data_key": "theory",
+        },
     ]
 
     def save(fig, tag, filename_prefix):
@@ -635,7 +661,9 @@ def generate_plots(stats_data, speed, outdir):
 
     def header(ax_header, title, color):
         if is_comparison:
-            ax_header.text(0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top")
+            ax_header.text(
+                0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top"
+            )
             # ax_header.text(0.5, 0.5, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
 
             line1_moves = stats_data[0]["move_string"]
@@ -643,30 +671,62 @@ def generate_plots(stats_data, speed, outdir):
             logo1_path = f"./logos/{''.join(stats_data[0]['moves'])}_logo.png"
             if os.path.exists(logo1_path):
                 box1 = ax_header.inset_axes(logo1_rect)
-                box1.imshow(plt.imread(logo1_path)); box1.axis("off")
+                box1.imshow(plt.imread(logo1_path))
+                box1.axis("off")
 
             line2_moves = stats_data[1]["move_string"]
             logo2_rect = LOGO_OVERRIDES.get(line2_moves, {}).get("dual_2", DUAL_LOGO2_RECT)
             logo2_path = f"./logos/{''.join(stats_data[1]['moves'])}_logo.png"
             if os.path.exists(logo2_path):
                 box2 = ax_header.inset_axes(logo2_rect)
-                box2.imshow(plt.imread(logo2_path)); box2.axis("off")
+                box2.imshow(plt.imread(logo2_path))
+                box2.axis("off")
 
             ax_header.text(0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
         else:
-            ax_header.text(SINGLE_TEXT_X, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="left", va="top")
+            ax_header.text(
+                SINGLE_TEXT_X,
+                0.95,
+                "Chess Opening Statistics",
+                color=C["cap"],
+                fontsize=19,
+                weight="semibold",
+                ha="left",
+                va="top",
+            )
             line_data = stats_data[0]
-            ax_header.text(SINGLE_TEXT_X, SINGLE_MAIN_TITLE_Y, line_data["name"], color=C["txt"], fontsize=16, weight="bold", ha="left", va="center")
+            ax_header.text(
+                SINGLE_TEXT_X,
+                SINGLE_MAIN_TITLE_Y,
+                line_data["name"],
+                color=C["txt"],
+                fontsize=16,
+                weight="bold",
+                ha="left",
+                va="center",
+            )
             sub_title = f"({' '.join(line_data['moves'])}) — {speed.capitalize()}"
-            ax_header.text(SINGLE_TEXT_X, SINGLE_SUB_TITLE_Y, sub_title, color=C["txt"], fontsize=14, weight="semibold", ha="left", va="center")
-            ax_header.text(SINGLE_TEXT_X, SINGLE_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="left", va="center")
+            ax_header.text(
+                SINGLE_TEXT_X,
+                SINGLE_SUB_TITLE_Y,
+                sub_title,
+                color=C["txt"],
+                fontsize=14,
+                weight="semibold",
+                ha="left",
+                va="center",
+            )
+            ax_header.text(
+                SINGLE_TEXT_X, SINGLE_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="left", va="center"
+            )
 
             line_moves = line_data["move_string"]
             logo_rect = LOGO_OVERRIDES.get(line_moves, {}).get("single", SINGLE_LOGO_RECT)
             logo_path = f"./logos/{''.join(line_data['moves'])}_logo.png"
             if os.path.exists(logo_path):
                 box = ax_header.inset_axes(logo_rect)
-                box.imshow(plt.imread(logo_path)); box.axis("off")
+                box.imshow(plt.imread(logo_path))
+                box.axis("off")
 
     def smooth(ax, xs, ys, col, label=None):
         cs = CubicSpline(xs, ys)
@@ -677,20 +737,26 @@ def generate_plots(stats_data, speed, outdir):
     for chart_info in charts:
         fig = plt.figure(figsize=(6, 7.5), dpi=180, facecolor=C["bg"], constrained_layout=True)
         gs = fig.add_gridspec(2, 1, height_ratios=[0.25, 0.75])
-        ax_header = fig.add_subplot(gs[0]); ax_header.axis("off")
+        ax_header = fig.add_subplot(gs[0])
+        ax_header.axis("off")
         ax_main = fig.add_subplot(gs[1])
-        ax_main.set_facecolor(C["bg"]); ax_main.grid(True, ls=":", lw=0.7, color=C["grid"])
-        for s in ax_main.spines.values(): s.set_edgecolor(C["grid"])
+        ax_main.set_facecolor(C["bg"])
+        ax_main.grid(True, ls=":", lw=0.7, color=C["grid"])
+        for s in ax_main.spines.values():
+            s.set_edgecolor(C["grid"])
         ax_main.tick_params(colors=C["txt"], labelsize=13, pad=8)
 
         header(ax_header, chart_info["title"], chart_info["color"])
         ax_main.set_xlabel("Player rating (Lichess)", labelpad=15, color=C["txt"], fontsize=16)
-        ax_main.set_xticks(centres); ax_main.set_xticklabels(tick_labels, rotation=45, ha="right", color=C["txt"])
+        ax_main.set_xticks(centres)
+        ax_main.set_xticklabels(tick_labels, rotation=45, ha="right", color=C["txt"])
 
         all_data = []
         for j, line_data in enumerate(stats_data):
-            if is_comparison: color = PLOT_COLORS[j % len(PLOT_COLORS)]
-            else: color = chart_info["color"]
+            if is_comparison:
+                color = PLOT_COLORS[j % len(PLOT_COLORS)]
+            else:
+                color = chart_info["color"]
             data = line_data[chart_info["data_key"]]
             all_data.extend(data)
             label = f"{line_data['name']} ({line_data['move_string']})"
@@ -704,7 +770,9 @@ def generate_plots(stats_data, speed, outdir):
 
         pad = (max(all_data) - min(all_data)) * 0.1 if all_data else 0.1
         ax_main.set_ylim(min(all_data) - pad - 0.1, max(all_data) + pad + 0.1)
-        ax_main.text(0.02, 0.98, chart_info["y_label"], transform=ax_main.transAxes, color=C["txt"], fontsize=14, ha="left", va="top")
+        ax_main.text(
+            0.02, 0.98, chart_info["y_label"], transform=ax_main.transAxes, color=C["txt"], fontsize=14, ha="left", va="top"
+        )
 
         if chart_info["key"] == "performance":
             mid = len(centres) // 2
@@ -712,8 +780,12 @@ def generate_plots(stats_data, speed, outdir):
                 "above this line means better than average",
                 xy=(centres[mid], base_gain_data[mid]),
                 xytext=(centres[mid], ax_main.get_ylim()[0] + 0.45 * (ax_main.get_ylim()[1] - ax_main.get_ylim()[0])),
-                arrowprops=dict(arrowstyle="-|>", color=C["arrow"], lw=1.2, path_effects=[pe.withStroke(linewidth=3, foreground=C["bg"])]),
-                color=C["arrow"], fontsize=11, ha="center",
+                arrowprops=dict(
+                    arrowstyle="-|>", color=C["arrow"], lw=1.2, path_effects=[pe.withStroke(linewidth=3, foreground=C["bg"])]
+                ),
+                color=C["arrow"],
+                fontsize=11,
+                ha="center",
             )
 
         ax_main.legend(facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="lower left", fancybox=True)
@@ -721,7 +793,8 @@ def generate_plots(stats_data, speed, outdir):
         save(fig, chart_info["key"], filename_prefix)
 
     print(f"\nPNG files written to {outdir}")
-    
+
+
 def run_plot_mode(args):
     """Handler for the 'plot' command."""
     move_string = " ".join(args.moves)
@@ -954,7 +1027,7 @@ def main():
         "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
     )
     parser_plot.set_defaults(func=run_plot_mode)
-    
+
     parser_compare = subparsers.add_parser("compare", help="Plot multiple openings on the same charts for comparison.")
     parser_compare.add_argument(
         "move_strings", nargs="+", help='Quoted, space-separated strings of moves to compare (e.g., "e4 c5" "d4 d5").'
