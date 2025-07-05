@@ -168,5 +168,5 @@ This layout allows for a clear, uncluttered view of the key metrics, helping you
 
 <p align="center">
   <img src="plots/white/d4_d5_c4_rapid/d4_d5_c4_rapid_reachability.png"   width="45%" alt="Reachability">&nbsp;
-  <img src="plots/white/d4_d5_c4_rapid/d4_d5_c4_rapid_prepefficiency.png" width="45%" alt="Prep Efficiency">
+  <img src="plots/white/d4_d5_c4_rapid/d4_d5_c4_rapid_surprise.png" width="45%" alt="Surprise">
 </p>
