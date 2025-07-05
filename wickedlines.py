@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import argparse
-import json  # Added for disk caching
+import json 
 import os
 import re
 import signal
 import sys
 import time
-from collections import deque, namedtuple
+from collections import namedtuple
 from datetime import datetime
 from urllib.parse import quote
 
