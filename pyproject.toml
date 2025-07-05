@@ -1,0 +1,34 @@
+[project]
+name = "wickedlines"
+version = "0.1.0"
+description = "Chess opening stats analyzer"
+requires-python = ">=3.8"
+dependencies = [
+    "matplotlib",
+    "python-chess",
+    "requests",
+    "tabulate",
+    "scipy"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==23.12.1",
+    "isort",
+    "flake8",
+    "pytest"
+]
+
+[tool.black]
+line-length = 128
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 128
+skip_gitignore = true
+
+[tool.flake8]
+max-line-length = 128
+exclude = [".git", "__pycache__", ".venv", ".wickedlines_cache"]
+select = ["E9", "F63", "F7", "F82"]
