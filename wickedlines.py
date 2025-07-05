@@ -556,10 +556,12 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
     return all_stats
 
 
+# --- Find the entire "generate_plots" function and REPLACE it with this one ---
+
 def generate_plots(stats_data, speed, outdir):
     """
-    Core plotting engine. Takes a list of stats dictionaries (one for each opening)
-    and generates the four comparison charts.
+    Core plotting engine. Generates 1080x1350 charts for one or two openings,
+    with a fixed, professional layout and dual logos in compare mode.
     """
     import textwrap
 
@@ -569,49 +571,63 @@ def generate_plots(stats_data, speed, outdir):
     from scipy.interpolate import CubicSpline
 
     os.makedirs(outdir, exist_ok=True)
-    is_comparison = len(stats_data) > 1
+    is_comparison = len(stats_data) > 1 and len(stats_data) == 2  # Layout is optimized for 1 or 2 openings
 
     buckets = [int(b) for b in PLOT_ELO_BRACKETS]
     centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])] + [2600]
     tick_labels = [str(int(c)) if c != 2600 else "2500+" for c in centres]
 
-    C = dict(bg="#121212", grid="#444", txt="#e9e9e9", cap="#c7c7c7", base="#b0b0b0", arrow="#efd545", title_color="#3399CC")
+    C = dict(bg="#121212", grid="#444", txt="#e9e9e9", cap="#c7c7c7", base="#b0b0b0", arrow="#efd545")
+    # --- FIX: Update chart titles for Prep Efficiency ---
+    charts = [
+        {"title": "Performance", "key": "performance", "y_label": "Expected Elo gain per 100 games", "color": "#57a8d8", "data_key": "elo_gain"},
+        {"title": "Reachability", "key": "reachability", "y_label": "Chance to reach position (%)", "color": "#f07c32", "data_key": "reach"},
+        {"title": "Popularity", "key": "popularity", "y_label": "Overall popularity of line (%)", "color": "#c875c4", "data_key": "pop"},
+        {"title": "Preparation Efficiency", "key": "prepefficiency", "y_label": "Surprise Factor (Reachability / Popularity)", "color": "#4ecdc4", "data_key": "theory"},
+    ]
 
     def save(fig, tag, filename_prefix):
         filepath = os.path.join(outdir, f"{filename_prefix}_{tag}.png")
-        fig.savefig(filepath, facecolor=fig.get_facecolor())
+        fig.savefig(filepath, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0.1)
         plt.close(fig)
 
-    def fig_axes():
-        fig = plt.figure(figsize=(6.02, 10.666), dpi=180, facecolor=C["bg"])
-        gs = fig.add_gridspec(100, 1, left=0.08, right=0.98, top=0.98, bottom=0.1)
-        head = fig.add_subplot(gs[:20, 0])
-        head.axis("off")
-        ax = fig.add_subplot(gs[20:, 0])
-        ax.set_facecolor(C["bg"])
-        ax.grid(True, ls=":", lw=0.7, color=C["grid"])
-        for s in ax.spines.values():
-            s.set_edgecolor(C["grid"])
-        ax.tick_params(colors=C["txt"], labelsize=13)
-        return fig, head, ax
+    def header(ax_header, title, color):
+        ax_header.text(0.5, 0.92, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top")
 
-    def header(ax, title):
-        ax.text(0, 0.78, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold")
         if is_comparison:
-            main_title = " vs ".join([line["name"].replace(" Opening", "").replace(" Defense", "") for line in stats_data])
-            sub_titles = " vs ".join([f"({line['move_string']})" for line in stats_data])
-            ax.text(0, 0.54, main_title, color=C["txt"], fontsize=25, weight="bold")
-            ax.text(0, 0.32, f"{sub_titles} — {speed.capitalize()}", color=C["txt"], fontsize=16, weight="semibold")
+            line1, line2 = stats_data[0], stats_data[1]
+            name1 = line1["name"].replace(" Opening", "").replace(" Defense", "")
+            name2 = line2["name"].replace(" Opening", "").replace(" Defense", "")
+
+            # --- FIX: Single, smaller line for main title to prevent collision ---
+            main_title = f"{name1} vs {name2}"
+            ax_header.text(0.5, 0.65, main_title, color=C["txt"], fontsize=22, weight="bold", ha="center", va="center")
+
+            sub_title = f"({line1['move_string']}) vs ({line2['move_string']}) — {speed.capitalize()}"
+            ax_header.text(0.5, 0.40, sub_title, color=C["txt"], fontsize=16, weight="semibold", ha="center", va="center")
+
+            # --- FIX: Move logos to the absolute exterior ---
+            logo1_path = f"./logos/{''.join(line1['moves'])}_logo.png"
+            if os.path.exists(logo1_path):
+                box1 = ax_header.inset_axes([0.0, 0.3, 0.3, 0.6]) # x=0.0
+                box1.imshow(plt.imread(logo1_path)); box1.axis("off")
+
+            logo2_path = f"./logos/{''.join(line2['moves'])}_logo.png"
+            if os.path.exists(logo2_path):
+                box2 = ax_header.inset_axes([0.7, 0.3, 0.3, 0.6]) # x=1.0-width
+                box2.imshow(plt.imread(logo2_path)); box2.axis("off")
         else:
             line_data = stats_data[0]
-            ax.text(0, 0.54, line_data["name"], color=C["txt"], fontsize=25, weight="bold")
-            ax.text(0, 0.32, f"({' '.join(line_data['moves'])}) — {speed.capitalize()}", color=C["txt"], fontsize=18, weight="semibold")
-        ax.text(0, 0.10, title, color=C["title_color"], fontsize=22, weight="bold")
+            ax_header.text(0.5, 0.68, line_data["name"], color=C["txt"], fontsize=28, weight="bold", ha="center", va="center")
+            sub_title = f"({' '.join(line_data['moves'])}) — {speed.capitalize()}"
+            ax_header.text(0.5, 0.40, sub_title, color=C["txt"], fontsize=18, weight="semibold", ha="center", va="center")
 
-    def xaxis(ax):
-        ax.set_xticks(centres)
-        ax.set_xticklabels(tick_labels, rotation=45, ha="right", color=C["txt"])
-        ax.set_xlabel("Player rating (Elo)", labelpad=15, color=C["txt"], fontsize=16)
+            logo_path = f"./logos/{''.join(line_data['moves'])}_logo.png"
+            if os.path.exists(logo_path):
+                box = ax_header.inset_axes([0.75, 0.25, 0.3, 0.6])
+                box.imshow(plt.imread(logo_path)); box.axis("off")
+
+        ax_header.text(0.5, 0.12, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
 
     def smooth(ax, xs, ys, col, label=None):
         cs = CubicSpline(xs, ys)
@@ -619,53 +635,60 @@ def generate_plots(stats_data, speed, outdir):
         ax.plot(dense, cs(dense), color=col, lw=2.4, label=label)
         ax.plot(xs, ys, "o", ms=7, color=col)
 
-    charts = [
-        {"title": "Performance: Expected Elo gain per 100 games", "key": "elo_gain"},
-        {"title": "Reachability (%)", "key": "reach"},
-        {"title": "Popularity (%)", "key": "pop"},
-        {"title": "Prep Efficiency (Reachability / Popularity)", "key": "theory"},
-    ]
     filename_prefix = "_vs_".join(s["move_string"].replace(" ", "_") for s in stats_data).lower() + f"_{speed}"
 
     for chart_info in charts:
-        fig, head, ax = fig_axes()
-        header(head, chart_info["title"])
-        xaxis(ax)
-        ax.set_ylabel(None)  # Y-axis label is now in the title
+        fig = plt.figure(figsize=(6, 7.5), dpi=180, facecolor=C["bg"], constrained_layout=True)
+        gs = fig.add_gridspec(2, 1, height_ratios=[0.25, 0.75])
+
+        ax_header = fig.add_subplot(gs[0]); ax_header.axis("off")
+        ax_main = fig.add_subplot(gs[1])
+
+        ax_main.set_facecolor(C["bg"]); ax_main.grid(True, ls=":", lw=0.7, color=C["grid"])
+        for s in ax_main.spines.values(): s.set_edgecolor(C["grid"])
+        ax_main.tick_params(colors=C["txt"], labelsize=13, pad=8)
+
+        header(ax_header, chart_info["title"], chart_info["color"])
+        ax_main.set_xlabel("Player rating (Lichess)", labelpad=15, color=C["txt"], fontsize=16)
+        ax_main.set_xticks(centres); ax_main.set_xticklabels(tick_labels, rotation=45, ha="right", color=C["txt"])
 
         all_data = []
         for j, line_data in enumerate(stats_data):
-            color = PLOT_COLORS[j % len(PLOT_COLORS)]
-            data = line_data[chart_info["key"]]
+            # --- FIX: Line color matches title color in single-plot mode ---
+            if is_comparison:
+                color = PLOT_COLORS[j % len(PLOT_COLORS)]
+            else:
+                color = chart_info["color"]
+            data = line_data[chart_info["data_key"]]
             all_data.extend(data)
             label = f"{line_data['name']} ({line_data['move_string']})"
-            smooth(ax, centres, data, color, label=label)
+            smooth(ax_main, centres, data, color, label=label)
 
-        if chart_info["key"] == "elo_gain":
-            line_data = stats_data[0]
-            base_label = f"Baseline (avg. {line_data['forcing_player']} perf.)"
-            smooth(ax, centres, line_data["base_gain"], C["base"], label=base_label)
+        if chart_info["key"] == "performance":
+            base_gain_data = stats_data[0]["base_gain"]
+            all_data.extend(base_gain_data)
+            base_label = f"Baseline (avg. {stats_data[0]['forcing_player']} perf.)"
+            smooth(ax_main, centres, base_gain_data, C["base"], label=base_label)
+
+        pad = (max(all_data) - min(all_data)) * 0.1 if all_data else 0.1
+        ax_main.set_ylim(min(all_data) - pad - 0.1, max(all_data) + pad + 0.1)
+        ax_main.text(0.02, 0.98, chart_info["y_label"], transform=ax_main.transAxes, color=C["txt"], fontsize=14, ha="left", va="top")
+
+        if chart_info["key"] == "performance":
             mid = len(centres) // 2
-            ax.annotate(
+            ax_main.annotate(
                 "above this line means better than average",
-                xy=(centres[mid], line_data["base_gain"][mid]),
-                xytext=(centres[mid], ax.get_ylim()[0] + 0.45 * (ax.get_ylim()[1] - ax.get_ylim()[0])),
+                xy=(centres[mid], base_gain_data[mid]),
+                xytext=(centres[mid], ax_main.get_ylim()[0] + 0.45 * (ax_main.get_ylim()[1] - ax_main.get_ylim()[0])),
                 arrowprops=dict(arrowstyle="-|>", color=C["arrow"], lw=1.2, path_effects=[pe.withStroke(linewidth=3, foreground=C["bg"])]),
                 color=C["arrow"], fontsize=11, ha="center",
             )
 
-        pad = (max(all_data) - min(all_data)) * 0.1
-        ax.set_ylim(min(all_data) - pad - 0.1, max(all_data) + pad + 0.1)
+        ax_main.legend(facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="lower left", fancybox=True)
+        fig.supxlabel("Created with open source tool WickedLines, come contribute!", color=C["cap"], fontsize=12)
+        save(fig, chart_info["key"], filename_prefix)
 
-        ax.legend(facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="lower left")
-        ax.text(0.01, 0.02, "Created with WickedLines", transform=ax.transAxes, color=C["cap"], fontsize=12, ha="left", va="bottom")
-        save(
-            fig,
-            chart_info["title"].split(":")[0].lower().replace(" ", "").replace("(%)", "").replace("/", ""),
-            filename_prefix,
-        )
     print(f"\nPNG files written to {outdir}")
-
 
 def run_plot_mode(args):
     """Handler for the 'plot' command."""
