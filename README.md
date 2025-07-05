@@ -2,7 +2,7 @@
 
 [![black](https://github.com/RemiFabre/WickedLines/actions/workflows/black.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/black.yml)
 [![isort](https://github.com/RemiFabre/WickedLines/actions/workflows/isort.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/isort.yml)
-[![flake8](https://github.com/RemiFabre/WickedLines/actions/workflows/flake8.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/flake8.yml)
+[![flake8](https://github.com/RemiFabre/WickedLines/actions/workflows/flake.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/flake8.yml)
 [![tests](https://github.com/RemiFabre/WickedLines/actions/workflows/tests.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/tests.yml)
 
 
