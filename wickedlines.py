@@ -555,13 +555,10 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
         )
     return all_stats
 
-
-# --- Find the entire "generate_plots" function and REPLACE it with this one ---
-
 def generate_plots(stats_data, speed, outdir):
     """
-    Core plotting engine. Generates 1080x1350 charts for one or two openings,
-    with a fixed, professional layout and dual logos in compare mode.
+    Core plotting engine. Generates 1080x1350 charts with a refined,
+    professional layout for both single and dual-logo modes.
     """
     import textwrap
 
@@ -570,15 +567,31 @@ def generate_plots(stats_data, speed, outdir):
     from matplotlib import patheffects as pe
     from scipy.interpolate import CubicSpline
 
+    # --- LAYOUT TWEAKABLES ---
+    # This section makes it easy to fine-tune the plot aesthetics.
+
+    # Single Plot Layout
+    SINGLE_TEXT_X = 0.05  # Left margin for all text
+    SINGLE_MAIN_TITLE_Y = 0.70  # Vertical position of the main opening name
+    SINGLE_SUB_TITLE_Y = 0.45  # Vertical position of the move list subtitle
+    SINGLE_CHART_TITLE_Y = 0.18 # Vertical position of the chart name (e.g., "Popularity")
+    SINGLE_LOGO_RECT = [0.55, 0.25, 0.4, 0.6]  # [left, bottom, width, height] for the logo
+
+    # Comparison (Dual) Plot Layout
+    DUAL_VS_Y = 0.45  # Vertical position of the "vs" text
+    DUAL_CHART_TITLE_Y = 0.12 # Vertical position of the chart name (e.g., "Performance")
+    DUAL_LOGO1_RECT = [0.0, 0.15, 0.4, 0.6]  # Rect for the left logo
+    DUAL_LOGO2_RECT = [0.6, 0.15, 0.4, 0.6]  # Rect for the right logo
+    # --- END OF TWEAKABLES ---
+
     os.makedirs(outdir, exist_ok=True)
-    is_comparison = len(stats_data) > 1 and len(stats_data) == 2  # Layout is optimized for 1 or 2 openings
+    is_comparison = len(stats_data) > 1 and len(stats_data) == 2  # Optimized for 1 or 2 openings
 
     buckets = [int(b) for b in PLOT_ELO_BRACKETS]
     centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])] + [2600]
     tick_labels = [str(int(c)) if c != 2600 else "2500+" for c in centres]
 
     C = dict(bg="#121212", grid="#444", txt="#e9e9e9", cap="#c7c7c7", base="#b0b0b0", arrow="#efd545")
-    # --- FIX: Update chart titles for Prep Efficiency ---
     charts = [
         {"title": "Performance", "key": "performance", "y_label": "Expected Elo gain per 100 games", "color": "#57a8d8", "data_key": "elo_gain"},
         {"title": "Reachability", "key": "reachability", "y_label": "Chance to reach position (%)", "color": "#f07c32", "data_key": "reach"},
@@ -592,42 +605,38 @@ def generate_plots(stats_data, speed, outdir):
         plt.close(fig)
 
     def header(ax_header, title, color):
-        ax_header.text(0.5, 0.92, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top")
+        ax_header.text(0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top")
 
         if is_comparison:
-            line1, line2 = stats_data[0], stats_data[1]
-            name1 = line1["name"].replace(" Opening", "").replace(" Defense", "")
-            name2 = line2["name"].replace(" Opening", "").replace(" Defense", "")
-
-            # --- FIX: Single, smaller line for main title to prevent collision ---
-            main_title = f"{name1} vs {name2}"
-            ax_header.text(0.5, 0.65, main_title, color=C["txt"], fontsize=22, weight="bold", ha="center", va="center")
-
-            sub_title = f"({line1['move_string']}) vs ({line2['move_string']}) — {speed.capitalize()}"
-            ax_header.text(0.5, 0.40, sub_title, color=C["txt"], fontsize=16, weight="semibold", ha="center", va="center")
-
-            # --- FIX: Move logos to the absolute exterior ---
-            logo1_path = f"./logos/{''.join(line1['moves'])}_logo.png"
+            # --- "Logo vs Logo" Layout ---
+            ax_header.text(0.5, DUAL_VS_Y, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
+            logo1_path = f"./logos/{''.join(stats_data[0]['moves'])}_logo.png"
             if os.path.exists(logo1_path):
-                box1 = ax_header.inset_axes([0.0, 0.3, 0.3, 0.6]) # x=0.0
+                box1 = ax_header.inset_axes(DUAL_LOGO1_RECT)
                 box1.imshow(plt.imread(logo1_path)); box1.axis("off")
 
-            logo2_path = f"./logos/{''.join(line2['moves'])}_logo.png"
+            logo2_path = f"./logos/{''.join(stats_data[1]['moves'])}_logo.png"
             if os.path.exists(logo2_path):
-                box2 = ax_header.inset_axes([0.7, 0.3, 0.3, 0.6]) # x=1.0-width
+                box2 = ax_header.inset_axes(DUAL_LOGO2_RECT)
                 box2.imshow(plt.imread(logo2_path)); box2.axis("off")
+            
+            # Chart title is centered in this mode
+            ax_header.text(0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
+
         else:
+            # --- Left-Aligned Text, Big Logo Layout ---
             line_data = stats_data[0]
-            ax_header.text(0.5, 0.68, line_data["name"], color=C["txt"], fontsize=28, weight="bold", ha="center", va="center")
+            ax_header.text(SINGLE_TEXT_X, SINGLE_MAIN_TITLE_Y, line_data["name"], color=C["txt"], fontsize=26, weight="bold", ha="left", va="center")
             sub_title = f"({' '.join(line_data['moves'])}) — {speed.capitalize()}"
-            ax_header.text(0.5, 0.40, sub_title, color=C["txt"], fontsize=18, weight="semibold", ha="center", va="center")
+            ax_header.text(SINGLE_TEXT_X, SINGLE_SUB_TITLE_Y, sub_title, color=C["txt"], fontsize=18, weight="semibold", ha="left", va="center")
+            
+            # Chart title is also left-aligned
+            ax_header.text(SINGLE_TEXT_X, SINGLE_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="left", va="center")
 
             logo_path = f"./logos/{''.join(line_data['moves'])}_logo.png"
             if os.path.exists(logo_path):
-                box = ax_header.inset_axes([0.75, 0.25, 0.3, 0.6])
+                box = ax_header.inset_axes(SINGLE_LOGO_RECT)
                 box.imshow(plt.imread(logo_path)); box.axis("off")
-
-        ax_header.text(0.5, 0.12, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
 
     def smooth(ax, xs, ys, col, label=None):
         cs = CubicSpline(xs, ys)
@@ -654,7 +663,6 @@ def generate_plots(stats_data, speed, outdir):
 
         all_data = []
         for j, line_data in enumerate(stats_data):
-            # --- FIX: Line color matches title color in single-plot mode ---
             if is_comparison:
                 color = PLOT_COLORS[j % len(PLOT_COLORS)]
             else:
