@@ -572,7 +572,7 @@ def generate_plots(stats_data, speed, outdir):
 
     # Single Plot Layout
     SINGLE_TEXT_X = 0.05  # Left margin for all text
-    SINGLE_MAIN_TITLE_Y = 0.70  # Vertical position of the main opening name
+    SINGLE_MAIN_TITLE_Y = 0.65  # Vertical position of the main opening name
     SINGLE_SUB_TITLE_Y = 0.45  # Vertical position of the move list subtitle
     SINGLE_CHART_TITLE_Y = 0.18 # Vertical position of the chart name (e.g., "Popularity")
     SINGLE_LOGO_RECT = [0.55, 0.25, 0.4, 0.6]  # [left, bottom, width, height] for the logo
@@ -596,7 +596,7 @@ def generate_plots(stats_data, speed, outdir):
         {"title": "Performance", "key": "performance", "y_label": "Expected Elo gain per 100 games", "color": "#57a8d8", "data_key": "elo_gain"},
         {"title": "Reachability", "key": "reachability", "y_label": "Chance to reach position (%)", "color": "#f07c32", "data_key": "reach"},
         {"title": "Popularity", "key": "popularity", "y_label": "Overall popularity of line (%)", "color": "#c875c4", "data_key": "pop"},
-        {"title": "Preparation Efficiency", "key": "prepefficiency", "y_label": "Surprise Factor (Reachability / Popularity)", "color": "#4ecdc4", "data_key": "theory"},
+        {"title": "Surprise", "key": "surprise", "y_label": "Surprise Factor (Reachability / Popularity)", "color": "#4ecdc4", "data_key": "theory"},
     ]
 
     def save(fig, tag, filename_prefix):
@@ -605,11 +605,11 @@ def generate_plots(stats_data, speed, outdir):
         plt.close(fig)
 
     def header(ax_header, title, color):
-        ax_header.text(0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top")
 
         if is_comparison:
+            ax_header.text(0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top")
             # --- "Logo vs Logo" Layout ---
-            ax_header.text(0.5, DUAL_VS_Y, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
+            # ax_header.text(0.5, DUAL_VS_Y, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
             logo1_path = f"./logos/{''.join(stats_data[0]['moves'])}_logo.png"
             if os.path.exists(logo1_path):
                 box1 = ax_header.inset_axes(DUAL_LOGO1_RECT)
@@ -625,10 +625,12 @@ def generate_plots(stats_data, speed, outdir):
 
         else:
             # --- Left-Aligned Text, Big Logo Layout ---
+            ax_header.text(SINGLE_TEXT_X, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="left", va="top")
+            
             line_data = stats_data[0]
-            ax_header.text(SINGLE_TEXT_X, SINGLE_MAIN_TITLE_Y, line_data["name"], color=C["txt"], fontsize=26, weight="bold", ha="left", va="center")
+            ax_header.text(SINGLE_TEXT_X, SINGLE_MAIN_TITLE_Y, line_data["name"], color=C["txt"], fontsize=16, weight="bold", ha="left", va="center")
             sub_title = f"({' '.join(line_data['moves'])}) — {speed.capitalize()}"
-            ax_header.text(SINGLE_TEXT_X, SINGLE_SUB_TITLE_Y, sub_title, color=C["txt"], fontsize=18, weight="semibold", ha="left", va="center")
+            ax_header.text(SINGLE_TEXT_X, SINGLE_SUB_TITLE_Y, sub_title, color=C["txt"], fontsize=14, weight="semibold", ha="left", va="center")
             
             # Chart title is also left-aligned
             ax_header.text(SINGLE_TEXT_X, SINGLE_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="left", va="center")
