@@ -1,5 +1,11 @@
 # WickedLines – Chess Opening Reachability & Value Explorer
 
+[![black](https://github.com/RemiFabre/WickedLines/actions/workflows/black.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/black.yml)
+[![isort](https://github.com/RemiFabre/WickedLines/actions/workflows/isort.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/isort.yml)
+[![flake8](https://github.com/RemiFabre/WickedLines/actions/workflows/flake.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/flake8.yml)
+[![tests](https://github.com/RemiFabre/WickedLines/actions/workflows/tests.yml/badge.svg)](https://github.com/RemiFabre/WickedLines/actions/workflows/tests.yml)
+
+
 <p align="center">
   <img src="plots/d4_d5_c4_rapid/d4_d5_c4_rapid_performance.png"  width="45%" alt="Performance">&nbsp;
   <img src="plots/d4_d5_c4_rapid/d4_d5_c4_rapid_popularity.png"  width="45%" alt="Popularity">
@@ -48,9 +54,9 @@ This is the ultimate metric for practicality. It combines a move's reachability 
 ## Installation
 
 1.  Ensure you have Python 3 installed.
-2.  Install the required libraries (including the new `scipy` dependency):
+2.  Install the required libraries:
 
-    pip install requests python-chess tabulate scipy
+    pip install -e .[dev]
 
 3.  Save the script (`wickedlines.py`).
 

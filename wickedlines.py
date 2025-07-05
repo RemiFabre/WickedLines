@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
+import argparse
+import json
+import os
+import re
+import signal
+import sys
+import time
+from collections import namedtuple
+from datetime import datetime
+from urllib.parse import quote
+
 import chess
 import chess.pgn
 import requests
-import time
-import argparse
-import signal
-import sys
-import os
-import re
-import json # Added for disk caching
-from urllib.parse import quote
-from tabulate import tabulate
-from collections import namedtuple, deque
 from scipy.stats import chi2_contingency
-from datetime import datetime
+from tabulate import tabulate
 
 # --- Matplotlib Dependency ---
 try:
@@ -23,47 +24,59 @@ except ImportError:
     sys.exit(1)
 
 # --- Configuration ---
-HunterConfig = namedtuple('HunterConfig', ['MIN_GAMES', 'MIN_REACH_PCT', 'DELTA_EV_THRESHOLD', 'P_VALUE_THRESHOLD', 'MAX_DEPTH', 'BRANCH_FACTOR', 'ELO_PER_POINT'])
-DEFAULT_HUNTER_CONFIG = HunterConfig(MIN_GAMES=1000, MIN_REACH_PCT=1.0, DELTA_EV_THRESHOLD=5.0, P_VALUE_THRESHOLD=0.05, MAX_DEPTH=6, BRANCH_FACTOR=4, ELO_PER_POINT=8)
+HunterConfig = namedtuple(
+    "HunterConfig",
+    ["MIN_GAMES", "MIN_REACH_PCT", "DELTA_EV_THRESHOLD", "P_VALUE_THRESHOLD", "MAX_DEPTH", "BRANCH_FACTOR", "ELO_PER_POINT"],
+)
+DEFAULT_HUNTER_CONFIG = HunterConfig(
+    MIN_GAMES=1000,
+    MIN_REACH_PCT=1.0,
+    DELTA_EV_THRESHOLD=5.0,
+    P_VALUE_THRESHOLD=0.05,
+    MAX_DEPTH=6,
+    BRANCH_FACTOR=4,
+    ELO_PER_POINT=8,
+)
 # Align with Lichess API enum
 PLOT_ELO_BRACKETS = ["0", "1000", "1200", "1400", "1600", "1800", "2000", "2200", "2500"]
 
 # Predefined list of openings for batch plotting
 BATCH_OPENINGS = [
     # 1.e4 Openings
-    {'name': 'Sicilian Defense', 'moves': 'e4 c5'},
-    {'name': 'French Defense', 'moves': 'e4 e6'},
-    {'name': 'Caro-Kann Defense', 'moves': 'e4 c6'},
-    {'name': 'Scandinavian Defense', 'moves': 'e4 d5'},
-    {'name': "Alekhine's Defense", 'moves': 'e4 Nf6'},
-    {'name': 'Modern Defense', 'moves': 'e4 g6'},
-    {'name': 'Italian Game', 'moves': 'e4 e5 Nf3 Nc6 Bc4'},
-    {'name': 'Ruy López', 'moves': 'e4 e5 Nf3 Nc6 Bb5'},
-    {'name': 'Vienna Game', 'moves': 'e4 e5 Nc3'},
-    {'name': 'Philidor Defense', 'moves': 'e4 e5 Nf3 d6'},
-    {'name': 'Pirc Defense', 'moves': 'e4 d6 d4 Nf6 Nc3 g6'},
-    {'name': 'Scotch Game', 'moves': 'e4 e5 Nf3 Nc6 d4'},
-    {'name': "King's Gambit", 'moves': 'e4 e5 f4'},
+    {"name": "Sicilian Defense", "moves": "e4 c5"},
+    {"name": "French Defense", "moves": "e4 e6"},
+    {"name": "Caro-Kann Defense", "moves": "e4 c6"},
+    {"name": "Scandinavian Defense", "moves": "e4 d5"},
+    {"name": "Alekhine's Defense", "moves": "e4 Nf6"},
+    {"name": "Modern Defense", "moves": "e4 g6"},
+    {"name": "Italian Game", "moves": "e4 e5 Nf3 Nc6 Bc4"},
+    {"name": "Ruy López", "moves": "e4 e5 Nf3 Nc6 Bb5"},
+    {"name": "Vienna Game", "moves": "e4 e5 Nc3"},
+    {"name": "Philidor Defense", "moves": "e4 e5 Nf3 d6"},
+    {"name": "Pirc Defense", "moves": "e4 d6 d4 Nf6 Nc3 g6"},
+    {"name": "Scotch Game", "moves": "e4 e5 Nf3 Nc6 d4"},
+    {"name": "King's Gambit", "moves": "e4 e5 f4"},
     # 1.d4 Openings
-    {'name': 'Dutch Defense', 'moves': 'd4 f5'},
-    {'name': "Queen's Gambit", 'moves': 'd4 d5 c4'},
-    {'name': "Queen's Gambit Accepted", 'moves': 'd4 d5 c4 dxc4'},
-    {'name': 'Slav Defense', 'moves': 'd4 d5 c4 c6'},
-    {'name': 'London System', 'moves': 'd4 d5 Bf4'},
-    {'name': "King's Indian Defense", 'moves': 'd4 Nf6 c4 g6'},
-    {'name': 'Nimzo-Indian Defense', 'moves': 'd4 Nf6 c4 e6 Nc3 Bb4'},
-    {'name': 'Grünfeld Defense', 'moves': 'd4 Nf6 c4 g6 Nc3 d5'},
-    {'name': 'Catalan Opening', 'moves': 'd4 Nf6 c4 e6 g3'},
-    {'name': 'Modern Benoni', 'moves': 'd4 Nf6 c4 c5 d5 e6'},
+    {"name": "Dutch Defense", "moves": "d4 f5"},
+    {"name": "Queen's Gambit", "moves": "d4 d5 c4"},
+    {"name": "Queen's Gambit Accepted", "moves": "d4 d5 c4 dxc4"},
+    {"name": "Slav Defense", "moves": "d4 d5 c4 c6"},
+    {"name": "London System", "moves": "d4 d5 Bf4"},
+    {"name": "King's Indian Defense", "moves": "d4 Nf6 c4 g6"},
+    {"name": "Nimzo-Indian Defense", "moves": "d4 Nf6 c4 e6 Nc3 Bb4"},
+    {"name": "Grünfeld Defense", "moves": "d4 Nf6 c4 g6 Nc3 d5"},
+    {"name": "Catalan Opening", "moves": "d4 Nf6 c4 e6 g3"},
+    {"name": "Modern Benoni", "moves": "d4 Nf6 c4 c5 d5 e6"},
     # Other Openings
-    {'name': 'English Opening', 'moves': 'c4'},
-    {'name': 'Réti Opening', 'moves': 'Nf3 d5 c4'},
+    {"name": "English Opening", "moves": "c4"},
+    {"name": "Réti Opening", "moves": "Nf3 d5 c4"},
 ]
 
 
 # --- Global State & Classes ---
 class Colors:
-    GREEN, RED, BLUE, YELLOW, GRAY, END = '\033[92m', '\033[91m', '\033[94m', '\033[93m', '\033[90m', '\033[0m'
+    GREEN, RED, BLUE, YELLOW, GRAY, END = "\033[92m", "\033[91m", "\033[94m", "\033[93m", "\033[90m", "\033[0m"
+
 
 class APIManager:
     def __init__(self):
@@ -72,10 +85,12 @@ class APIManager:
         self.call_count = 0
         self.cache_dir = ".wickedlines_cache"
         os.makedirs(self.cache_dir, exist_ok=True)
+
     def _get_cache_filepath(self, fen, speeds, ratings):
-        safe_fen = fen.replace('/', '_')
-        safe_key = f"{safe_fen}__{speeds}__{ratings}".replace(',', '_')
+        safe_fen = fen.replace("/", "_")
+        safe_key = f"{safe_fen}__{speeds}__{ratings}".replace(",", "_")
         return os.path.join(self.cache_dir, f"{safe_key}.json")
+
     def query(self, fen, speeds, ratings, force_refresh=False):
         cache_key = f"{fen}|{speeds}|{ratings}"
         if cache_key in self.cache:
@@ -83,7 +98,8 @@ class APIManager:
         filepath = self._get_cache_filepath(fen, speeds, ratings)
         if not force_refresh and os.path.exists(filepath):
             try:
-                with open(filepath, 'r') as f: data = json.load(f)
+                with open(filepath, "r") as f:
+                    data = json.load(f)
                 self.cache[cache_key] = data
                 return data
             except (json.JSONDecodeError, IOError) as e:
@@ -93,139 +109,222 @@ class APIManager:
             self.call_count += 1
             try:
                 r = requests.get(self.base_url, params=params)
-                if r.status_code == 429: print(f"\n{colorize('[INFO] Rate limit hit. Waiting 60s...', Colors.YELLOW)}"); time.sleep(60); continue
-                r.raise_for_status(); data = r.json()
+                if r.status_code == 429:
+                    print(f"\n{colorize('[INFO] Rate limit hit. Waiting 60s...', Colors.YELLOW)}")
+                    time.sleep(60)
+                    continue
+                r.raise_for_status()
+                data = r.json()
                 try:
-                    with open(filepath, 'w') as f: json.dump(data, f, indent=2)
+                    with open(filepath, "w") as f:
+                        json.dump(data, f, indent=2)
                 except IOError as e:
                     print(f"\n{colorize(f'[WARN] Could not write to cache file {filepath}: {e}', Colors.YELLOW)}")
                 self.cache[cache_key] = data
                 return data
-            except requests.exceptions.RequestException as e: print(f"\n{colorize('[ERROR] API request failed: ' + str(e), Colors.RED)}"); return None
+            except requests.exceptions.RequestException as e:
+                print(f"\n{colorize('[ERROR] API request failed: ' + str(e), Colors.RED)}")
+                return None
+
 
 api_manager = APIManager()
 found_lines = []
-ANSI_ESCAPE_PATTERN = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+ANSI_ESCAPE_PATTERN = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
 
 # --- Helper Functions ---
-def colorize(text, color): return f"{color}{text}{Colors.END}"
-def strip_colors(text): return ANSI_ESCAPE_PATTERN.sub('', text)
-def colorize_ev(ev): return colorize(f"{ev:+.1f}", Colors.GREEN if ev > 0.5 else Colors.RED if ev < -0.5 else Colors.END)
+def colorize(text, color):
+    return f"{color}{text}{Colors.END}"
+
+
+def strip_colors(text):
+    return ANSI_ESCAPE_PATTERN.sub("", text)
+
+
+def colorize_ev(ev):
+    return colorize(f"{ev:+.1f}", Colors.GREEN if ev > 0.5 else Colors.RED if ev < -0.5 else Colors.END)
+
+
 def get_fen_from_san_sequence(moves):
     board = chess.Board()
     try:
-        for move in moves: board.push_san(move)
+        for move in moves:
+            board.push_san(move)
         return board.fen(), "W" if board.turn == chess.WHITE else "B"
-    except Exception as e: print(f"{colorize('Error parsing move sequence: ' + str(e), Colors.RED)}"); return None, None
+    except Exception as e:
+        print(f"{colorize('Error parsing move sequence: ' + str(e), Colors.RED)}")
+        return None, None
+
+
 def generate_lichess_url(moves):
     board, game = chess.Board(), chess.pgn.Game()
     node = game
     for move in moves:
-        try: node = node.add_variation(board.push_san(move))
-        except ValueError: return "Invalid move sequence"
+        try:
+            node = node.add_variation(board.push_san(move))
+        except ValueError:
+            return "Invalid move sequence"
     pgn = str(game).replace(" *", "")
     return f"https://lichess.org/analysis/pgn/{quote(pgn)}"
+
+
 def calculate_p_value(move_stats, other_stats):
     observed = [list(move_stats), list(other_stats)]
-    if sum(observed[1]) <= 0: return 0.0
-    try: _, p, _, _ = chi2_contingency(observed); return p
-    except ValueError: return 1.0
+    if sum(observed[1]) <= 0:
+        return 0.0
+    try:
+        _, p, _, _ = chi2_contingency(observed)
+        return p
+    except ValueError:
+        return 1.0
+
 
 # --- "Line" Mode Logic ---
 def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=None, force_refresh=False):
     headers = ["Move", "Played by", "Games", "p-value", "EV (×100)", "Raw %", "Move %", "If White Wants %", "If Black Wants %"]
     rows, board, white_wants, black_wants = [], chess.Board(), 1.0, 1.0
     root_data = api_manager.query(board.fen(), speeds, ratings, force_refresh=force_refresh)
-    if not root_data or "white" not in root_data: return 0,0,'W',[], ""
-    root_total = sum(root_data.get(k,0) for k in ['white','draws','black'])
-    if root_total == 0: return 0,0,'W',[], ""
-    root_ev = (root_data.get('white',0) - root_data.get('black',0)) / root_total * 100 if root_total else 0
+    if not root_data or "white" not in root_data:
+        return 0, 0, "W", [], ""
+    root_total = sum(root_data.get(k, 0) for k in ["white", "draws", "black"])
+    if root_total == 0:
+        return 0, 0, "W", [], ""
+    root_ev = (root_data.get("white", 0) - root_data.get("black", 0)) / root_total * 100 if root_total else 0
     rows.append(["(start)", "-", f"{root_total:,}", "-", colorize_ev(root_ev), "100.00", "100.00", "100.00", "100.00"])
     prev_data, line_name = root_data, (root_data.get("opening") or {}).get("name")
     for move_san in moves:
         played_by = "W" if board.turn == chess.WHITE else "B"
-        move_data = next((m for m in prev_data.get("moves",[]) if m.get("san") == move_san), None)
-        if not move_data: break
-        w,d,b = move_data.get("white",0), move_data.get("draws",0), move_data.get("black",0)
-        parent_w, parent_d, parent_b = prev_data.get("white",0), prev_data.get("draws",0), prev_data.get("black",0)
-        other_stats = (parent_w-w, parent_d-d, parent_b-b)
-        p_value = calculate_p_value((w,d,b), other_stats)
-        if p_value < 0.001: p_str = colorize("<0.001", Colors.GREEN)
-        else: p_str = colorize(f"{p_value:.3f}", Colors.GREEN) if p_value < DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD else f"{p_value:.3f}"
-        prev_total, move_total = parent_w + parent_d + parent_b, w+d+b
+        move_data = next((m for m in prev_data.get("moves", []) if m.get("san") == move_san), None)
+        if not move_data:
+            break
+        w, d, b = move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0)
+        parent_w, parent_d, parent_b = prev_data.get("white", 0), prev_data.get("draws", 0), prev_data.get("black", 0)
+        other_stats = (parent_w - w, parent_d - d, parent_b - b)
+        p_value = calculate_p_value((w, d, b), other_stats)
+        if p_value < 0.001:
+            p_str = colorize("<0.001", Colors.GREEN)
+        else:
+            p_str = (
+                colorize(f"{p_value:.3f}", Colors.GREEN)
+                if p_value < DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD
+                else f"{p_value:.3f}"
+            )
+        prev_total, move_total = parent_w + parent_d + parent_b, w + d + b
         move_pct = move_total / prev_total if prev_total > 0 else 0
-        if played_by == "W": black_wants *= move_pct
-        else: white_wants *= move_pct
+        if played_by == "W":
+            black_wants *= move_pct
+        else:
+            white_wants *= move_pct
         board.push_san(move_san)
         current_data = api_manager.query(board.fen(), speeds, ratings, force_refresh=force_refresh)
-        if not current_data: break
-        total = sum(current_data.get(k,0) for k in ['white','draws','black'])
-        if total == 0: break
-        ev = (current_data.get('white',0) - current_data.get('black',0)) / total * 100 if total else 0
+        if not current_data:
+            break
+        total = sum(current_data.get(k, 0) for k in ["white", "draws", "black"])
+        if total == 0:
+            break
+        ev = (current_data.get("white", 0) - current_data.get("black", 0)) / total * 100 if total else 0
         move_str = move_san + (colorize(" <-- Interesting", Colors.BLUE) if move_san == interesting_move_san else "")
-        rows.append([move_str, played_by, f"{total:,}", p_str, colorize_ev(ev), f"{(total/root_total*100):.2f}", f"{move_pct*100:.2f}", f"{white_wants*100:.2f}", f"{black_wants*100:.2f}"])
+        rows.append(
+            [
+                move_str,
+                played_by,
+                f"{total:,}",
+                p_str,
+                colorize_ev(ev),
+                f"{(total/root_total*100):.2f}",
+                f"{move_pct*100:.2f}",
+                f"{white_wants*100:.2f}",
+                f"{black_wants*100:.2f}",
+            ]
+        )
         prev_data = current_data
         line_name = (current_data.get("opening") or {}).get("name")
     print(tabulate(rows, headers=headers, tablefmt="pretty"))
-    return white_wants*100, black_wants*100, "W" if board.turn == chess.WHITE else "B", moves, line_name
+    return white_wants * 100, black_wants * 100, "W" if board.turn == chess.WHITE else "B", moves, line_name
+
 
 def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val_thresh):
-    player_str = "White" if turn == 'W' else "Black"
+    player_str = "White" if turn == "W" else "Black"
     print(f"\nFinal Position (FEN): {fen}\nLichess URL: {generate_lichess_url(move_list)}")
     print(f"If White wants, this position will be reached {white_reach:.2f}% of the time.")
     print(f"If Black wants, this position will be reached {black_reach:.2f}% of the time.\n")
-    pos_w, pos_d, pos_b = data.get("white",0), data.get("draws",0), data.get("black",0)
+    pos_w, pos_d, pos_b = data.get("white", 0), data.get("draws", 0), data.get("black", 0)
     pos_total = pos_w + pos_d + pos_b
     pos_ev = ((pos_w - pos_b) / pos_total) if pos_total else 0
     best_move_san = None
     if pos_total > 0:
         moves_with_stats = []
         for m in data.get("moves", []):
-            total = sum(m.get(k,0) for k in ['white','draws','black'])
-            if total > 0: moves_with_stats.append({'san': m['san'], 'ev': (m['white'] - m['black']) / total})
-        if moves_with_stats: best_move_san = (max if turn == 'W' else min)(moves_with_stats, key=lambda x: x['ev'])['san']
+            total = sum(m.get(k, 0) for k in ["white", "draws", "black"])
+            if total > 0:
+                moves_with_stats.append({"san": m["san"], "ev": (m["white"] - m["black"]) / total})
+        if moves_with_stats:
+            best_move_san = (max if turn == "W" else min)(moves_with_stats, key=lambda x: x["ev"])["san"]
     headers, rows = ["Move", "Games", "EV", "ΔEV", "p-value", "Opening"], []
     parent_stats = (pos_w, pos_d, pos_b)
     for move in data.get("moves", []):
-        w,d,b = move.get("white",0), move.get("draws",0), move.get("black",0)
-        total = w+d+b; other_stats = (pos_w-w, pos_d-d, pos_b-b)
-        if total == 0: continue
-        move_ev = (w-b)/total if total > 0 else 0
+        w, d, b = move.get("white", 0), move.get("draws", 0), move.get("black", 0)
+        total = w + d + b
+        other_stats = (pos_w - w, pos_d - d, pos_b - b)
+        if total == 0:
+            continue
+        move_ev = (w - b) / total if total > 0 else 0
         delta_ev = (move_ev - pos_ev) * 100
-        p_value = calculate_p_value((w,d,b), other_stats)
-        if p_value < 0.001: p_str = colorize("<0.001", Colors.GREEN)
-        else: p_str = colorize(f"{p_value:.3f}", Colors.GREEN) if p_value < p_val_thresh else f"{p_value:.3f}"
+        p_value = calculate_p_value((w, d, b), other_stats)
+        if p_value < 0.001:
+            p_str = colorize("<0.001", Colors.GREEN)
+        else:
+            p_str = colorize(f"{p_value:.3f}", Colors.GREEN) if p_value < p_val_thresh else f"{p_value:.3f}"
         delta_ev_str = f"{delta_ev:+.1f}"
-        if (turn == 'W' and delta_ev > 0.5) or (turn == 'B' and delta_ev < -0.5): delta_ev_str = colorize(delta_ev_str, Colors.GREEN)
-        elif (turn == 'W' and delta_ev < -0.5) or (turn == 'B' and delta_ev > 0.5): delta_ev_str = colorize(delta_ev_str, Colors.RED)
-        move_san_str = move.get("san","?") + (colorize(" <-- Best", Colors.BLUE) if move.get("san") == best_move_san else "")
+        if (turn == "W" and delta_ev > 0.5) or (turn == "B" and delta_ev < -0.5):
+            delta_ev_str = colorize(delta_ev_str, Colors.GREEN)
+        elif (turn == "W" and delta_ev < -0.5) or (turn == "B" and delta_ev > 0.5):
+            delta_ev_str = colorize(delta_ev_str, Colors.RED)
+        move_san_str = move.get("san", "?") + (colorize(" <-- Best", Colors.BLUE) if move.get("san") == best_move_san else "")
         opening_name = (move.get("opening") or {}).get("name", "-")
-        rows.append([move_san_str, f"{total:,}", colorize_ev(move_ev*100), delta_ev_str, p_str, opening_name])
-    print(f"Next Move Statistics for {player_str}:"); print(tabulate(rows, headers=headers, tablefmt="pretty"))
+        rows.append([move_san_str, f"{total:,}", colorize_ev(move_ev * 100), delta_ev_str, p_str, opening_name])
+    print(f"Next Move Statistics for {player_str}:")
+    print(tabulate(rows, headers=headers, tablefmt="pretty"))
+
 
 def run_line_mode(args):
     print(colorize(f"\nAnalyzing line: {' '.join(args.moves) or '(start)'}", Colors.YELLOW))
     print(f"Speeds: {args.speeds} | Ratings: {args.ratings}")
-    interesting_move = getattr(args, 'interesting_move_san', None)
-    white_reach, black_reach, _, _, line_name = print_line_reachability_stats(args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move, force_refresh=args.force_refresh)
+    interesting_move = getattr(args, "interesting_move_san", None)
+    white_reach, black_reach, _, _, line_name = print_line_reachability_stats(
+        args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move, force_refresh=args.force_refresh
+    )
     final_fen, final_turn = get_fen_from_san_sequence(args.moves)
-    if not final_fen: return 1.0, 1.0, ""
+    if not final_fen:
+        return 1.0, 1.0, ""
     data = api_manager.query(final_fen, args.speeds, args.ratings, force_refresh=args.force_refresh)
     if data:
         print()
-        print_move_stats(final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD)
-    return white_reach/100, black_reach/100, line_name
+        print_move_stats(
+            final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD
+        )
+    return white_reach / 100, black_reach / 100, line_name
+
 
 # --- "Hunt" Mode Logic ---
-def find_interesting_lines_iterative(initial_board, initial_moves, start_white_prob, start_black_prob, speeds, ratings, config, max_finds, force_refresh=False):
+def find_interesting_lines_iterative(
+    initial_board, initial_moves, start_white_prob, start_black_prob, speeds, ratings, config, max_finds, force_refresh=False
+):
     stack = [(initial_board.fen(), initial_moves, None, start_white_prob, start_black_prob, len(initial_moves))]
     visited_nodes, found_count = 0, 0
     parent_board = chess.Board()
     if initial_moves:
-        for move in initial_moves[:-1]: parent_board.push_san(move)
-        stack[0] = stack[0][:2] + (api_manager.query(parent_board.fen(), speeds, ratings, force_refresh=force_refresh),) + stack[0][3:]
+        for move in initial_moves[:-1]:
+            parent_board.push_san(move)
+        stack[0] = (
+            stack[0][:2] + (api_manager.query(parent_board.fen(), speeds, ratings, force_refresh=force_refresh),) + stack[0][3:]
+        )
     else:
-        stack[0] = stack[0][:2] + (api_manager.query(initial_board.fen(), speeds, ratings, force_refresh=force_refresh),) + stack[0][3:]
+        stack[0] = (
+            stack[0][:2]
+            + (api_manager.query(initial_board.fen(), speeds, ratings, force_refresh=force_refresh),)
+            + stack[0][3:]
+        )
 
     while stack:
         if max_finds and found_count >= max_finds:
@@ -235,48 +334,87 @@ def find_interesting_lines_iterative(initial_board, initial_moves, start_white_p
         board = chess.Board(fen)
         visited_nodes += 1
         indent = "  " * (depth - len(initial_moves))
-        print(f"\r{indent}{colorize(f'[{visited_nodes: >3}|{len(stack): >3}]', Colors.GRAY)} Searching: {' '.join(move_history) or '(start)'}...", " " * 20, end="")
+        print(
+            f"\r{indent}{colorize(f'[{visited_nodes: >3}|{len(stack): >3}]', Colors.GRAY)} Searching: {' '.join(move_history) or '(start)'}...",
+            " " * 20,
+            end="",
+        )
         current_data = api_manager.query(fen, speeds, ratings, force_refresh=force_refresh)
-        if not current_data: continue
-        total_games = sum(current_data.get(k, 0) for k in ['white', 'draws', 'black'])
+        if not current_data:
+            continue
+        total_games = sum(current_data.get(k, 0) for k in ["white", "draws", "black"])
         is_white_turn = board.turn == chess.WHITE
         reach_prob = white_prob if is_white_turn else black_prob
         if total_games < config.MIN_GAMES or depth >= config.MAX_DEPTH or reach_prob * 100 < config.MIN_REACH_PCT:
             continue
-        prev_total = sum(prev_pos_data.get(k, 0) for k in ['white','draws','black'])
-        if prev_total == 0: continue
-        pos_ev = (prev_pos_data.get('white',0) - prev_pos_data.get('black',0)) / prev_total if prev_total > 0 else 0
-        parent_stats = (prev_pos_data.get('white',0), prev_pos_data.get('draws',0), prev_pos_data.get('black',0))
-        sorted_moves = sorted(current_data.get("moves",[]), key=lambda m: sum(m.get(k,0) for k in ['white','draws','black']), reverse=True)
+        prev_total = sum(prev_pos_data.get(k, 0) for k in ["white", "draws", "black"])
+        if prev_total == 0:
+            continue
+        pos_ev = (prev_pos_data.get("white", 0) - prev_pos_data.get("black", 0)) / prev_total if prev_total > 0 else 0
+        parent_stats = (prev_pos_data.get("white", 0), prev_pos_data.get("draws", 0), prev_pos_data.get("black", 0))
+        sorted_moves = sorted(
+            current_data.get("moves", []), key=lambda m: sum(m.get(k, 0) for k in ["white", "draws", "black"]), reverse=True
+        )
         for move_data in sorted_moves:
-            w,d,b = move_data.get("white",0), move_data.get("draws",0), move_data.get("black",0)
-            move_total = w+d+b
-            if move_total < config.MIN_GAMES: continue
-            other_stats = (parent_stats[0]-w, parent_stats[1]-d, parent_stats[2]-b)
-            p_value = calculate_p_value((w,d,b), other_stats)
-            if p_value >= config.P_VALUE_THRESHOLD: continue
-            move_ev = (w-b)/move_total if move_total > 0 else 0
+            w, d, b = move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0)
+            move_total = w + d + b
+            if move_total < config.MIN_GAMES:
+                continue
+            other_stats = (parent_stats[0] - w, parent_stats[1] - d, parent_stats[2] - b)
+            p_value = calculate_p_value((w, d, b), other_stats)
+            if p_value >= config.P_VALUE_THRESHOLD:
+                continue
+            move_ev = (w - b) / move_total if move_total > 0 else 0
             delta_ev = (move_ev - pos_ev) * 100
             if abs(delta_ev) > config.DELTA_EV_THRESHOLD:
                 if (is_white_turn and delta_ev > 0) or (not is_white_turn and delta_ev < 0):
                     found_count += 1
-                    full_line_moves = move_history + [move_data['san']]
+                    full_line_moves = move_history + [move_data["san"]]
                     player_name = "WHITE" if is_white_turn else "BLACK"
                     elo_gain = reach_prob * abs(delta_ev) * config.ELO_PER_POINT
                     opening_name = (move_data.get("opening") or {}).get("name", "no name")
-                    report = {"line_moves": full_line_moves, "line_ev": move_ev * 100, "delta_ev": delta_ev, "p_value": p_value, "elo_gain": elo_gain, "opening_name": opening_name, "player": player_name, "reach_pct": reach_prob * 100}
+                    report = {
+                        "line_moves": full_line_moves,
+                        "line_ev": move_ev * 100,
+                        "delta_ev": delta_ev,
+                        "p_value": p_value,
+                        "elo_gain": elo_gain,
+                        "opening_name": opening_name,
+                        "player": player_name,
+                        "reach_pct": reach_prob * 100,
+                    }
                     found_lines.append(report)
                     title = f" FOUND OPPORTUNITY FOR {player_name} #{found_count} | ΔEV: {delta_ev:+.1f} | ELO Gain/100: {elo_gain:+.2f} "
                     print()
                     print(colorize("\n" + title.center(85, "="), Colors.BLUE))
-                    run_line_mode(argparse.Namespace(moves=full_line_moves, speeds=speeds, ratings=ratings, interesting_move_san=move_data['san'], force_refresh=force_refresh))
-                    print(colorize("="*85, Colors.BLUE) + "\n")
-        for move_to_explore in reversed(sorted_moves[:config.BRANCH_FACTOR]):
+                    run_line_mode(
+                        argparse.Namespace(
+                            moves=full_line_moves,
+                            speeds=speeds,
+                            ratings=ratings,
+                            interesting_move_san=move_data["san"],
+                            force_refresh=force_refresh,
+                        )
+                    )
+                    print(colorize("=" * 85, Colors.BLUE) + "\n")
+        for move_to_explore in reversed(sorted_moves[: config.BRANCH_FACTOR]):
             new_board = board.copy()
-            new_board.push_san(move_to_explore['san'])
-            move_pct = sum(move_to_explore.get(k,0) for k in ['white','draws','black']) / total_games if total_games else 0
-            new_white_prob, new_black_prob = (white_prob, black_prob * move_pct) if is_white_turn else (white_prob * move_pct, black_prob)
-            stack.append((new_board.fen(), move_history + [move_to_explore['san']], current_data, new_white_prob, new_black_prob, depth + 1))
+            new_board.push_san(move_to_explore["san"])
+            move_pct = sum(move_to_explore.get(k, 0) for k in ["white", "draws", "black"]) / total_games if total_games else 0
+            new_white_prob, new_black_prob = (
+                (white_prob, black_prob * move_pct) if is_white_turn else (white_prob * move_pct, black_prob)
+            )
+            stack.append(
+                (
+                    new_board.fen(),
+                    move_history + [move_to_explore["san"]],
+                    current_data,
+                    new_white_prob,
+                    new_black_prob,
+                    depth + 1,
+                )
+            )
+
 
 def run_hunt_mode(args):
     global found_lines, interrupted_args, hunt_start_time, interrupted_line_name
@@ -284,21 +422,38 @@ def run_hunt_mode(args):
     config = DEFAULT_HUNTER_CONFIG
     hunt_start_time = time.time()
     print("--- WickedLines Blunder Hunt ---")
-    print(f"Config: Min Games={config.MIN_GAMES}, Min Reach%={config.MIN_REACH_PCT}, ΔEV>|{config.DELTA_EV_THRESHOLD}|, p<{config.P_VALUE_THRESHOLD}, Branch={config.BRANCH_FACTOR}, ELO Gain Factor={config.ELO_PER_POINT}")
+    print(
+        f"Config: Min Games={config.MIN_GAMES}, Min Reach%={config.MIN_REACH_PCT}, ΔEV>|{config.DELTA_EV_THRESHOLD}|, p<{config.P_VALUE_THRESHOLD}, Branch={config.BRANCH_FACTOR}, ELO Gain Factor={config.ELO_PER_POINT}"
+    )
     board, start_white_prob, start_black_prob, line_name = chess.Board(), 1.0, 1.0, ""
     if args.moves:
-        start_white_prob, start_black_prob, line_name = run_line_mode(argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings, force_refresh=args.force_refresh))
+        start_white_prob, start_black_prob, line_name = run_line_mode(
+            argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings, force_refresh=args.force_refresh)
+        )
         for move in args.moves:
-            try: board.push_san(move)
-            except ValueError: return
+            try:
+                board.push_san(move)
+            except ValueError:
+                return
     interrupted_line_name = line_name
     print(f"\n--- Starting Hunt from position: {' '.join(args.moves) or '(start)'} ---")
-    find_interesting_lines_iterative(board, args.moves, start_white_prob, start_black_prob, args.speeds, args.ratings, config, args.max_finds, force_refresh=args.force_refresh)
+    find_interesting_lines_iterative(
+        board,
+        args.moves,
+        start_white_prob,
+        start_black_prob,
+        args.speeds,
+        args.ratings,
+        config,
+        args.max_finds,
+        force_refresh=args.force_refresh,
+    )
     hunt_duration = time.time() - hunt_start_time
     print(colorize("\n--- Hunt Complete ---", Colors.BLUE))
     if found_lines:
         print_final_summary(args, config, hunt_duration, line_name)
     print(f"Total API calls made: {api_manager.call_count} (many results were served from cache)")
+
 
 # --- "Plot" and "Batch Plot" Mode Logic ---
 def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
@@ -306,37 +461,49 @@ def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
     white_wants, black_wants = 1.0, 1.0
     line_name = "N/A"
     root_data = api_manager.query(board.fen(), speed, rating_bracket, force_refresh=force_refresh)
-    if not root_data: return 0, 0, 0, 0, "API Error", "White"
-    root_total_games = sum(root_data.get(k, 0) for k in ['white', 'draws', 'black'])
-    if root_total_games == 0: root_total_games = 1
-    
-    root_ev = (root_data.get('white', 0) - root_data.get('black', 0)) / root_total_games * 100 if root_total_games > 0 else 0
+    if not root_data:
+        return 0, 0, 0, 0, "API Error", "White"
+    root_total_games = sum(root_data.get(k, 0) for k in ["white", "draws", "black"])
+    if root_total_games == 0:
+        root_total_games = 1
+
+    root_ev = (root_data.get("white", 0) - root_data.get("black", 0)) / root_total_games * 100 if root_total_games > 0 else 0
 
     prev_data = root_data
     for move_san in moves:
         played_by = "W" if board.turn == chess.WHITE else "B"
         move_data = next((m for m in prev_data.get("moves", []) if m.get("san") == move_san), None)
-        if not move_data: break
-        parent_total_ply = sum(prev_data.get(k, 0) for k in ['white', 'draws', 'black'])
-        if parent_total_ply == 0: break
-        move_total = sum(move_data.get(k, 0) for k in ['white', 'draws', 'black'])
+        if not move_data:
+            break
+        parent_total_ply = sum(prev_data.get(k, 0) for k in ["white", "draws", "black"])
+        if parent_total_ply == 0:
+            break
+        move_total = sum(move_data.get(k, 0) for k in ["white", "draws", "black"])
         move_pct = move_total / parent_total_ply if parent_total_ply > 0 else 0
-        if played_by == "W": black_wants *= move_pct
-        else: white_wants *= move_pct
+        if played_by == "W":
+            black_wants *= move_pct
+        else:
+            white_wants *= move_pct
         board.push_san(move_san)
         prev_data = api_manager.query(board.fen(), speed, rating_bracket, force_refresh=force_refresh)
-        if not prev_data: break
+        if not prev_data:
+            break
         line_name = (prev_data.get("opening") or {}).get("name", line_name)
     is_last_move_by_white = len(moves) % 2 != 0
     forcing_player = "White" if is_last_move_by_white else "Black"
     reachability = white_wants if forcing_player == "White" else black_wants
     final_data = prev_data
-    if not final_data: return 0, 0, 0, root_ev, line_name, forcing_player
-    final_pos_total_games = sum(final_data.get(k, 0) for k in ['white', 'draws', 'black'])
+    if not final_data:
+        return 0, 0, 0, root_ev, line_name, forcing_player
+    final_pos_total_games = sum(final_data.get(k, 0) for k in ["white", "draws", "black"])
     popularity = final_pos_total_games / root_total_games if root_total_games > 0 else 0
     if final_pos_total_games == 0:
         return 0, reachability * 100, popularity * 100, root_ev, line_name, forcing_player
-    ev = (final_data.get('white', 0) - final_data.get('black', 0)) / final_pos_total_games * 100 if final_pos_total_games > 0 else 0
+    ev = (
+        (final_data.get("white", 0) - final_data.get("black", 0)) / final_pos_total_games * 100
+        if final_pos_total_games > 0
+        else 0
+    )
     return ev, reachability * 100, popularity * 100, root_ev, line_name, forcing_player
 
 
@@ -347,21 +514,23 @@ def run_plot_mode(args):
     """
 
     # ---------- TWEAKABLES ---------------------------------------------
-    HEADER_FRAC          = 0.20         # header height % (more room)
-    CREDIT_XY            = (0.01, 0.02) # where the tiny credit sits
-    CREDIT_SIZE          = 12
-    ARROW_HEIGHT_FRAC    = 0.45         # yellow arrow vertical pos
-    LOGO_BOX             = [.76, .00, .27, 1.17]  # 30 % bigger & a bit higher
-    WRAP_WIDTH           = 46           # (only used for non-perf charts)
+    HEADER_FRAC = 0.20  # header height % (more room)
+    CREDIT_XY = (0.01, 0.02)  # where the tiny credit sits
+    CREDIT_SIZE = 12
+    ARROW_HEIGHT_FRAC = 0.45  # yellow arrow vertical pos
+    LOGO_BOX = [0.76, 0.00, 0.27, 1.17]  # 30 % bigger & a bit higher
+    WRAP_WIDTH = 46  # (only used for non-perf charts)
     # -------------------------------------------------------------------
 
-    import os, numpy as np
+    import os
+
     import matplotlib.pyplot as plt
+    import numpy as np
     from matplotlib import patheffects as pe
     from scipy.interpolate import CubicSpline
 
     # bucket list & mid-points
-    buckets = [int(b) for b in PLOT_ELO_BRACKETS]            # 0 … 2500
+    buckets = [int(b) for b in PLOT_ELO_BRACKETS]  # 0 … 2500
     centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])] + [2600]
     tick_labels = [str(int(c)) if c != 2600 else "2500+" for c in centres]
 
@@ -373,13 +542,17 @@ def run_plot_mode(args):
         ev, r_, p_, root_ev, name, player = get_stats_for_line(
             args.moves, args.speed, str(bucket), force_refresh=args.force_refresh
         )
-        print(f"{colorize(f'[{bucket: >4}]', Colors.GRAY)} {args.moves} | {args.speed} | {name} | {player} | "
-              f"EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | "
-              f"Pop: {p_:.2f}% | Base EV: {colorize_ev(root_ev)}")
+        print(
+            f"{colorize(f'[{bucket: >4}]', Colors.GRAY)} {args.moves} | {args.speed} | {name} | {player} | "
+            f"EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | "
+            f"Pop: {p_:.2f}% | Base EV: {colorize_ev(root_ev)}"
+        )
         adj, base = (ev, root_ev) if player == "White" else (-ev, -root_ev)
         elo_gain.append(adj * ELO_FACTOR)
         base_gain.append(base * ELO_FACTOR)
-        reach.append(r_); pop.append(p_); theory.append(r_/p_ if p_ else 0)
+        reach.append(r_)
+        pop.append(p_)
+        theory.append(r_ / p_ if p_ else 0)
         forcing = player
         if name not in ("Unknown Opening", "N/A"):
             final_name = name
@@ -389,39 +562,50 @@ def run_plot_mode(args):
     outdir = os.path.join("plots", f"{moves_id}_{speed_id}")
     os.makedirs(outdir, exist_ok=True)
 
-    C = dict(bg="#121212", grid="#444", txt="#e9e9e9", cap="#c7c7c7",
-             perf="#57a8d8", reach="#f07c32", pop="#c875c4",
-             theory="#4ecdc4", base="#b0b0b0", arrow="#efd545")
+    C = dict(
+        bg="#121212",
+        grid="#444",
+        txt="#e9e9e9",
+        cap="#c7c7c7",
+        perf="#57a8d8",
+        reach="#f07c32",
+        pop="#c875c4",
+        theory="#4ecdc4",
+        base="#b0b0b0",
+        arrow="#efd545",
+    )
 
     def save(fig, tag):
-        fig.savefig(os.path.join(outdir, f"{moves_id}_{speed_id}_{tag}.png"),
-                    facecolor=fig.get_facecolor())
+        fig.savefig(os.path.join(outdir, f"{moves_id}_{speed_id}_{tag}.png"), facecolor=fig.get_facecolor())
         plt.close(fig)
 
     # helpers
     def fig_axes():
         fig = plt.figure(figsize=(6.02, 10.666), dpi=180, facecolor=C["bg"])
-        gs  = fig.add_gridspec(100, 1, left=.08, right=.98)
-        head = fig.add_subplot(gs[:int(HEADER_FRAC*100), 0]); head.axis("off")
-        ax   = fig.add_subplot(gs[int(HEADER_FRAC*100):, 0])
-        ax.set_facecolor(C["bg"]); ax.grid(True, ls=":", lw=.7, color=C["grid"])
-        for s in ax.spines.values(): s.set_edgecolor(C["grid"])
+        gs = fig.add_gridspec(100, 1, left=0.08, right=0.98)
+        head = fig.add_subplot(gs[: int(HEADER_FRAC * 100), 0])
+        head.axis("off")
+        ax = fig.add_subplot(gs[int(HEADER_FRAC * 100) :, 0])
+        ax.set_facecolor(C["bg"])
+        ax.grid(True, ls=":", lw=0.7, color=C["grid"])
+        for s in ax.spines.values():
+            s.set_edgecolor(C["grid"])
         ax.tick_params(colors=C["txt"], labelsize=13)
         return fig, head, ax
 
     def header(ax, title, col):
-        ax.text(0, .78, "Chess Opening Statistics", color=C["cap"],
-                fontsize=19, weight="semibold")
-        ax.text(0, .54, final_name, color=C["txt"],
-                fontsize=25, weight="bold")
-        ax.text(0, .32, f"({' '.join(args.moves)}) — {args.speed.capitalize()}",
-                color=C["txt"], fontsize=18, weight="semibold")
-        ax.text(0, .10, title, color=col, fontsize=22, weight="bold")
+        ax.text(0, 0.78, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold")
+        ax.text(0, 0.54, final_name, color=C["txt"], fontsize=25, weight="bold")
+        ax.text(
+            0, 0.32, f"({' '.join(args.moves)}) — {args.speed.capitalize()}", color=C["txt"], fontsize=18, weight="semibold"
+        )
+        ax.text(0, 0.10, title, color=col, fontsize=22, weight="bold")
         logo = f"./logos/{''.join(args.moves)}_logo.png"
         if os.path.exists(logo):
             try:
                 box = ax.inset_axes(LOGO_BOX)
-                box.imshow(plt.imread(logo)); box.axis("off")
+                box.imshow(plt.imread(logo))
+                box.axis("off")
             except Exception:
                 pass
 
@@ -440,72 +624,79 @@ def run_plot_mode(args):
     charts = [
         ("Performance", C["perf"], elo_gain, True),
         ("Reachability", C["reach"], reach, False),
-        ("Popularity",  C["pop"],  pop,  False),
+        ("Popularity", C["pop"], pop, False),
         ("Prep Efficiency", C["theory"], theory, False),
     ]
 
     for title, col, data, is_perf in charts:
         fig, head, ax = fig_axes()
-        header(head, title, col); xaxis(ax)
+        header(head, title, col)
+        xaxis(ax)
 
         if not is_perf:
-            pad = max(data)*0.10
-            ax.set_ylim(min(data)-pad, max(data)+pad)
+            pad = max(data) * 0.10
+            ax.set_ylim(min(data) - pad, max(data) + pad)
 
         # main curve
-        main_label = ("Elo Gain (per 100 games)" if is_perf else None)
+        main_label = "Elo Gain (per 100 games)" if is_perf else None
         smooth(ax, centres, data, col, label=main_label)
 
         # extras for Performance
         if is_perf:
             base_label = f"Baseline (avg. {forcing} performance)"
             smooth(ax, centres, base_gain, C["base"], label=base_label)
-            mid = len(centres)//2
-            ax.annotate("above baseline → better",
-                        xy=(centres[mid], base_gain[mid]),
-                        xytext=(centres[mid],
-                                ax.get_ylim()[0] +
-                                ARROW_HEIGHT_FRAC*(ax.get_ylim()[1]-ax.get_ylim()[0])),
-                        arrowprops=dict(arrowstyle="-|>", color=C["arrow"], lw=1.2,
-                                        path_effects=[pe.withStroke(
-                                            linewidth=3, foreground=C["bg"])]),
-                        color=C["arrow"], fontsize=11, ha="center")
+            mid = len(centres) // 2
+            ax.annotate(
+                "above baseline → better",
+                xy=(centres[mid], base_gain[mid]),
+                xytext=(centres[mid], ax.get_ylim()[0] + ARROW_HEIGHT_FRAC * (ax.get_ylim()[1] - ax.get_ylim()[0])),
+                arrowprops=dict(
+                    arrowstyle="-|>", color=C["arrow"], lw=1.2, path_effects=[pe.withStroke(linewidth=3, foreground=C["bg"])]
+                ),
+                color=C["arrow"],
+                fontsize=11,
+                ha="center",
+            )
 
         # put explanation inside legend for non-perf charts
         if not is_perf:
-            expl = {"Reachability": f"Chance {player} can steer into this line",
-                    "Popularity":  "Raw share of games with this move-order",
-                    "Prep Efficiency": "Higher → stronger surprise-weapon potential"}[title]
-            ax.plot([], [], ' ', label=expl)
+            expl = {
+                "Reachability": f"Chance {player} can steer into this line",
+                "Popularity": "Raw share of games with this move-order",
+                "Prep Efficiency": "Higher → stronger surprise-weapon potential",
+            }[title]
+            ax.plot([], [], " ", label=expl)
 
         # legend
-        ax.legend(facecolor="#222", edgecolor="#555", fontsize=13,
-                  labelcolor=C["txt"], loc="upper right")
+        ax.legend(facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="upper right")
 
         # tiny credit
-        ax.text(*CREDIT_XY, "Created with open-source tool WickedLines. Come contribute!",
-                transform=ax.transAxes, color=C["cap"],
-                fontsize=CREDIT_SIZE, ha="left", va="bottom")
+        ax.text(
+            *CREDIT_XY,
+            "Created with open-source tool WickedLines. Come contribute!",
+            transform=ax.transAxes,
+            color=C["cap"],
+            fontsize=CREDIT_SIZE,
+            ha="left",
+            va="bottom",
+        )
 
         save(fig, title.lower().replace(" ", ""))
 
     print(f"PNG files written to {outdir}")
 
+
 def run_batch_plot_mode(args):
     total_openings = len(BATCH_OPENINGS)
     print(colorize(f"Starting batch plot generation for {total_openings} openings...", Colors.YELLOW))
     print(f"Plots will be saved to the '{os.path.join(os.getcwd(), 'plots')}' directory.")
-    
+
     for i, opening in enumerate(BATCH_OPENINGS):
         print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE))
-        
+
         # --- THIS IS THE CORRECTED LINE ---
         # We now pass the force_refresh argument from the main command down to the individual plot job.
-        plot_args = argparse.Namespace(
-            moves=opening['moves'].split(), 
-            speed=args.speed, 
-            force_refresh=args.force_refresh
-        )
+        plot_args = argparse.Namespace(moves=opening["moves"].split(), speed=args.speed, force_refresh=args.force_refresh)
         # --- END OF CHANGE ---
 
         try:
@@ -513,12 +704,13 @@ def run_batch_plot_mode(args):
             print(colorize(f"Successfully generated plot for {opening['name']}.", Colors.GREEN))
         except Exception as e:
             print(colorize(f"Failed to generate plot for {opening['name']}: {e}", Colors.RED))
-        
+
         # No need to sleep if we are using cached data, but it's a good rate-limiting practice otherwise.
         if args.force_refresh:
             time.sleep(0.5)
 
     print(colorize("\nBatch plot generation complete.", Colors.YELLOW))
+
 
 # --- Main Execution & Signal Handling ---
 def generate_filename(args, config, line_name):
@@ -531,31 +723,40 @@ def generate_filename(args, config, line_name):
     config_slug = f"MD-{config.MAX_DEPTH}_MG-{config.MIN_GAMES}_BF-{config.BRANCH_FACTOR}"
     return f"{line_slug}_{ratings_slug}_{speeds_slug}_{config_slug}.md"
 
+
 def update_hunt_index(results_dir="hunt_results"):
     index_path = "HUNT_INDEX.md"
     try:
-        if not os.path.exists(results_dir): return
+        if not os.path.exists(results_dir):
+            return
         reports_data = []
         for filename in os.listdir(results_dir):
-            if filename.endswith('.md'):
-                parts = filename.replace('.md', '').split('_')
-                data = {'path': os.path.join(results_dir, filename)}
+            if filename.endswith(".md"):
+                parts = filename.replace(".md", "").split("_")
+                data = {"path": os.path.join(results_dir, filename)}
                 line_parts, config_parts = [], []
                 config_started = False
                 for part in parts:
-                    if 'ratings-' in part or 'speeds-' in part or 'MD-' in part: config_started = True
-                    if config_started: config_parts.append(part)
-                    else: line_parts.append(part)
-                data['line_slug'] = ' '.join(line_parts)
+                    if "ratings-" in part or "speeds-" in part or "MD-" in part:
+                        config_started = True
+                    if config_started:
+                        config_parts.append(part)
+                    else:
+                        line_parts.append(part)
+                data["line_slug"] = " ".join(line_parts)
                 for part in config_parts:
-                    if 'ratings-' in part: data['ratings'] = part.replace('ratings-', '').replace('-',',')
-                    if 'speeds-' in part: data['speeds'] = part.replace('speeds-', '').replace('-',',')
-                    if 'MD-' in part: data['config_str'] = part.replace('-','=').replace('_',', ')
+                    if "ratings-" in part:
+                        data["ratings"] = part.replace("ratings-", "").replace("-", ",")
+                    if "speeds-" in part:
+                        data["speeds"] = part.replace("speeds-", "").replace("-", ",")
+                    if "MD-" in part:
+                        data["config_str"] = part.replace("-", "=").replace("_", ", ")
                 reports_data.append(data)
         grouped_reports = {}
         for report in reports_data:
-            line = report.get('line_slug', 'Unknown')
-            if line not in grouped_reports: grouped_reports[line] = []
+            line = report.get("line_slug", "Unknown")
+            if line not in grouped_reports:
+                grouped_reports[line] = []
             grouped_reports[line].append(report)
         with open(index_path, "w", encoding="utf-8") as f:
             f.write("# WickedLines Hunt Results Index\n\n")
@@ -566,28 +767,38 @@ def update_hunt_index(results_dir="hunt_results"):
                 for line, reports in sorted(grouped_reports.items()):
                     f.write(f"## Hunt Reports for: `{line if line else 'Start Position'}`\n\n")
                     for report in reports:
-                        f.write(f"- **Ratings**: `{report.get('ratings','N/A')}` | **Speeds**: `{report.get('speeds','N/A')}` | **Config**: `{report.get('config_str','N/A')}` -> **[View Report]({report['path']})**\n")
+                        f.write(
+                            f"- **Ratings**: `{report.get('ratings','N/A')}` | **Speeds**: `{report.get('speeds','N/A')}` | **Config**: `{report.get('config_str','N/A')}` -> **[View Report]({report['path']})**\n"
+                        )
                     f.write("\n")
         print(colorize(f"Updated master index file: {index_path}", Colors.YELLOW))
-    except Exception as e: print(colorize(f"Could not update hunt index: {e}", Colors.RED))
+    except Exception as e:
+        print(colorize(f"Could not update hunt index: {e}", Colors.RED))
+
 
 def print_final_summary(args, config, hunt_duration, line_name):
-    if not found_lines: return
+    if not found_lines:
+        return
     print(colorize("\n" + " Hunt Summary ".center(85, "-"), Colors.BLUE))
     print("Top opportunities ranked by expected ELO gain over 100 games:\n")
-    file_output = ["# WickedLines Hunt Report", f"### For initial line: `{' '.join(args.moves) or '(start)'}` ({line_name or 'no name'})"]
+    file_output = [
+        "# WickedLines Hunt Report",
+        f"### For initial line: `{' '.join(args.moves) or '(start)'}` ({line_name or 'no name'})",
+    ]
     file_output.append(f"\n- **Date:** `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`")
     file_output.append(f"- **Ratings:** `{args.ratings}` | **Speeds:** `{args.speeds}`")
-    file_output.append(f"- **Config:** Min Games=`{config.MIN_GAMES}`, Max Depth=`{config.MAX_DEPTH}`, Min Reach=`{config.MIN_REACH_PCT}%`, Branch Factor=`{config.BRANCH_FACTOR}`")
+    file_output.append(
+        f"- **Config:** Min Games=`{config.MIN_GAMES}`, Max Depth=`{config.MAX_DEPTH}`, Min Reach=`{config.MIN_REACH_PCT}%`, Branch Factor=`{config.BRANCH_FACTOR}`"
+    )
     file_output.append(f"- **Analysis Duration:** `{hunt_duration:.2f} seconds`")
     file_output.append(f"- **API Calls:** `{api_manager.call_count}`")
     file_output.append("\n---\n\nTop opportunities ranked by expected ELO gain over 100 games:\n")
-    sorted_report = sorted(found_lines, key=lambda x: x['elo_gain'], reverse=True)
+    sorted_report = sorted(found_lines, key=lambda x: x["elo_gain"], reverse=True)
     for i, item in enumerate(sorted_report):
         rank = i + 1
-        p_str = "<0.001" if item['p_value'] < 0.001 else f"{item['p_value']:.3f}"
+        p_str = "<0.001" if item["p_value"] < 0.001 else f"{item['p_value']:.3f}"
         elo_gain_str = f"ELO Gain/100: {item['elo_gain']:>+5.2f}"
-        player_title = item['player'].title()
+        player_title = item["player"].title()
         delta_ev_str = f"{colorize_ev(item['delta_ev'])} (good for {player_title})"
         delta_ev_str_plain = f"{item['delta_ev']:+.1f} (good for {player_title})"
         reach_pct_str = f"Reachable: {item['reach_pct']:.2f}%"
@@ -609,48 +820,61 @@ def print_final_summary(args, config, hunt_duration, line_name):
     filepath = os.path.join(results_dir, filename)
     try:
         os.makedirs(results_dir, exist_ok=True)
-        with open(filepath, "w", encoding="utf-8") as f: f.write("\n".join(file_output))
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write("\n".join(file_output))
         print(colorize(f"Successfully saved hunt report to: {filepath}", Colors.YELLOW))
         update_hunt_index(results_dir)
-    except Exception as e: print(colorize(f"Error saving report to file: {e}", Colors.RED))
+    except Exception as e:
+        print(colorize(f"Error saving report to file: {e}", Colors.RED))
+
 
 def signal_handler(sig, frame):
     print(colorize("\n\nHunt interrupted by user.", Colors.YELLOW))
-    if 'hunt_start_time' in globals() and 'interrupted_args' in globals() and found_lines:
+    if "hunt_start_time" in globals() and "interrupted_args" in globals() and found_lines:
         print_final_summary(interrupted_args, DEFAULT_HUNTER_CONFIG, time.time() - hunt_start_time, interrupted_line_name)
-    print(f"\nTotal API calls made during this session: {api_manager.call_count}"); sys.exit(0)
+    print(f"\nTotal API calls made during this session: {api_manager.call_count}")
+    sys.exit(0)
+
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)
     global interrupted_args, hunt_start_time, interrupted_line_name, found_lines
     interrupted_args, hunt_start_time, interrupted_line_name = None, 0.0, ""
     found_lines = []
-    
+
     parser = argparse.ArgumentParser(
         description="WickedLines: A tool for chess opening analysis using the Lichess database.",
-        formatter_class=argparse.RawTextHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest="mode", required=True, help="Available modes")
 
-    parser_line = subparsers.add_parser('line', help="Analyze a single, specific line of moves.")
+    parser_line = subparsers.add_parser("line", help="Analyze a single, specific line of moves.")
     parser_line.add_argument("moves", nargs="+", help="Move list in SAN (e.g., e4 e5 Nf3 Nc6)")
-    parser_line.add_argument("--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters. Default: blitz,rapid,classical")
-    parser_line.add_argument("--ratings",
-    default="1600",
-    help=(
-        "Comma-separated rating buckets (enum: "
-        "0,1000,1200,1400,1600,1800,2000,2200,2500). "
-        "Each bucket covers its value up to the next (e.g. 1600 means 1600→1799). "
-        "Default: 1600"
-    ),
+    parser_line.add_argument(
+        "--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters. Default: blitz,rapid,classical"
     )
-    parser_line.add_argument("--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API.")
+    parser_line.add_argument(
+        "--ratings",
+        default="1600",
+        help=(
+            "Comma-separated rating buckets (enum: "
+            "0,1000,1200,1400,1600,1800,2000,2200,2500). "
+            "Each bucket covers its value up to the next (e.g. 1600 means 1600→1799). "
+            "Default: 1600"
+        ),
+    )
+    parser_line.add_argument(
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
+    )
     parser_line.set_defaults(func=run_line_mode)
 
-    parser_hunt = subparsers.add_parser('hunt', help="Recursively search for interesting opportunities and blunders.")
+    parser_hunt = subparsers.add_parser("hunt", help="Recursively search for interesting opportunities and blunders.")
     parser_hunt.add_argument("moves", nargs="*", help="Optional initial move sequence to start the hunt from.")
-    parser_hunt.add_argument("--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters. Default: blitz,rapid,classical")
-    parser_hunt.add_argument("--ratings",
+    parser_hunt.add_argument(
+        "--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters. Default: blitz,rapid,classical"
+    )
+    parser_hunt.add_argument(
+        "--ratings",
         default="1600",
         help=(
             "Comma-separated rating buckets (enum: "
@@ -660,22 +884,39 @@ def main():
         ),
     )
     parser_hunt.add_argument("--max-finds", type=int, help="Stop the search after finding N interesting lines.")
-    parser_hunt.add_argument("--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API.")
+    parser_hunt.add_argument(
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
+    )
     parser_hunt.set_defaults(func=run_hunt_mode)
 
-    parser_plot = subparsers.add_parser('plot', help="Plot the performance of an opening across all ELO ratings.")
+    parser_plot = subparsers.add_parser("plot", help="Plot the performance of an opening across all ELO ratings.")
     parser_plot.add_argument("moves", nargs="+", help="Move list in SAN to plot (e.g., e4 c6).")
-    parser_plot.add_argument("--speed", default="rapid", choices=['blitz', 'rapid', 'classical'], help="A single, fixed time control for the plot. Default: rapid.")
-    parser_plot.add_argument("--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API.")
+    parser_plot.add_argument(
+        "--speed",
+        default="rapid",
+        choices=["blitz", "rapid", "classical"],
+        help="A single, fixed time control for the plot. Default: rapid.",
+    )
+    parser_plot.add_argument(
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
+    )
     parser_plot.set_defaults(func=run_plot_mode)
 
-    parser_batchplot = subparsers.add_parser('batchplot', help="Generate plots for a predefined list of major openings.")
-    parser_batchplot.add_argument("--speed", default="rapid", choices=['blitz', 'rapid', 'classical'], help="A single, fixed time control for all plots. Default: rapid.")
-    parser_batchplot.add_argument("--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API.")
+    parser_batchplot = subparsers.add_parser("batchplot", help="Generate plots for a predefined list of major openings.")
+    parser_batchplot.add_argument(
+        "--speed",
+        default="rapid",
+        choices=["blitz", "rapid", "classical"],
+        help="A single, fixed time control for all plots. Default: rapid.",
+    )
+    parser_batchplot.add_argument(
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
+    )
     parser_batchplot.set_defaults(func=run_batch_plot_mode)
 
     args = parser.parse_args()
     args.func(args)
+
 
 if __name__ == "__main__":
     main()
