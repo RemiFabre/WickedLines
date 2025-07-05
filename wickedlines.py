@@ -600,8 +600,20 @@ def generate_plots(stats_data, speed, outdir):
     DUAL_CHART_TITLE_Y = 0.12
     # --- END OF TWEAKABLES ---
 
-    os.makedirs(outdir, exist_ok=True)
     is_comparison = len(stats_data) > 1 and len(stats_data) == 2
+
+    # Determine output directory based on opening color
+    # Use the first line to determine if it's a White or Black opening
+    # Odd number of moves = White's turn, Even = Black's turn
+    color_folder = "white" if len(stats_data[0]["moves"]) % 2 != 0 else "black"
+
+    # Define the specific folder name for this plot run, which also serves as the filename prefix
+    filename_prefix = "_vs_".join(s["move_string"].replace(" ", "_") for s in stats_data).lower() + f"_{speed}"
+
+    # Create the final output path, e.g., "plots/black/e4_c5_rapid"
+    # This now defines the 'outdir' used throughout the function.
+    outdir = os.path.join("plots", color_folder, filename_prefix)
+    os.makedirs(outdir, exist_ok=True)
 
     buckets = [int(b) for b in PLOT_ELO_BRACKETS]
     centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])] + [2600]
@@ -616,6 +628,7 @@ def generate_plots(stats_data, speed, outdir):
     ]
 
     def save(fig, tag, filename_prefix):
+        # The 'outdir' variable is now the correct, nested path.
         filepath = os.path.join(outdir, f"{filename_prefix}_{tag}.png")
         fig.savefig(filepath, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0.1)
         plt.close(fig)
@@ -625,7 +638,6 @@ def generate_plots(stats_data, speed, outdir):
             ax_header.text(0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top")
             # ax_header.text(0.5, 0.5, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
 
-            # --- CHANGE: Use LOGO_OVERRIDES to get custom rectangles ---
             line1_moves = stats_data[0]["move_string"]
             logo1_rect = LOGO_OVERRIDES.get(line1_moves, {}).get("dual_1", DUAL_LOGO1_RECT)
             logo1_path = f"./logos/{''.join(stats_data[0]['moves'])}_logo.png"
@@ -649,7 +661,6 @@ def generate_plots(stats_data, speed, outdir):
             ax_header.text(SINGLE_TEXT_X, SINGLE_SUB_TITLE_Y, sub_title, color=C["txt"], fontsize=14, weight="semibold", ha="left", va="center")
             ax_header.text(SINGLE_TEXT_X, SINGLE_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="left", va="center")
 
-            # --- CHANGE: Use LOGO_OVERRIDES to get custom rectangle ---
             line_moves = line_data["move_string"]
             logo_rect = LOGO_OVERRIDES.get(line_moves, {}).get("single", SINGLE_LOGO_RECT)
             logo_path = f"./logos/{''.join(line_data['moves'])}_logo.png"
@@ -662,8 +673,6 @@ def generate_plots(stats_data, speed, outdir):
         dense = np.linspace(xs[0], xs[-1], 400)
         ax.plot(dense, cs(dense), color=col, lw=2.4, label=label)
         ax.plot(xs, ys, "o", ms=7, color=col)
-
-    filename_prefix = "_vs_".join(s["move_string"].replace(" ", "_") for s in stats_data).lower() + f"_{speed}"
 
     for chart_info in charts:
         fig = plt.figure(figsize=(6, 7.5), dpi=180, facecolor=C["bg"], constrained_layout=True)
@@ -740,10 +749,8 @@ def run_batch_plot_mode(args):
     for i, opening in enumerate(BATCH_OPENINGS):
         print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE))
 
-        # --- THIS IS THE CORRECTED LINE ---
         # We now pass the force_refresh argument from the main command down to the individual plot job.
         plot_args = argparse.Namespace(moves=opening["moves"].split(), speed=args.speed, force_refresh=args.force_refresh)
-        # --- END OF CHANGE ---
 
         try:
             run_plot_mode(plot_args)

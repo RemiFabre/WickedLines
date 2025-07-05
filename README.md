@@ -7,8 +7,8 @@
 
 
 <p align="center">
-  <img src="plots/d4_d5_c4_rapid/d4_d5_c4_rapid_performance.png"  width="45%" alt="Performance">&nbsp;
-  <img src="plots/d4_d5_c4_rapid/d4_d5_c4_rapid_popularity.png"  width="45%" alt="Popularity">
+  <img src="plots/white/d4_d5_c4_rapid/d4_d5_c4_rapid_performance.png"  width="45%" alt="Performance">&nbsp;
+  <img src="plots/white/d4_d5_c4_rapid/d4_d5_c4_rapid_popularity.png"  width="45%" alt="Popularity">
 </p>
 
 
@@ -167,6 +167,6 @@ The figure is split into two charts that share the same ELO x-axis for easy comp
 This layout allows for a clear, uncluttered view of the key metrics, helping you understand not only if an opening is good, but also how practical and common it is at different skill levels.
 
 <p align="center">
-  <img src="plots/d4_d5_c4_rapid/d4_d5_c4_rapid_reachability.png"   width="45%" alt="Reachability">&nbsp;
-  <img src="plots/d4_d5_c4_rapid/d4_d5_c4_rapid_prepefficiency.png" width="45%" alt="Prep Efficiency">
+  <img src="plots/white/d4_d5_c4_rapid/d4_d5_c4_rapid_reachability.png"   width="45%" alt="Reachability">&nbsp;
+  <img src="plots/white/d4_d5_c4_rapid/d4_d5_c4_rapid_prepefficiency.png" width="45%" alt="Prep Efficiency">
 </p>
