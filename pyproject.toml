@@ -28,11 +28,5 @@ profile = "black"
 line_length = 128
 skip_gitignore = true
 
-[tool.flake8]
-max-line-length = 128
-ignore = ["E501"]
-exclude = [".git", "__pycache__", ".venv", ".wickedlines_cache"]
-select = ["E9", "F63", "F7", "F82"]
-
 [tool.setuptools]
 packages = []
