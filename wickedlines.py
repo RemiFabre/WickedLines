@@ -16,19 +16,10 @@ import requests
 from scipy.stats import chi2_contingency
 from tabulate import tabulate
 
-
 # --- Configuration ---
 HunterConfig = namedtuple(
     "HunterConfig",
-    [
-        "MIN_GAMES",
-        "MIN_REACH_PCT",
-        "DELTA_EV_THRESHOLD",
-        "P_VALUE_THRESHOLD",
-        "MAX_DEPTH",
-        "BRANCH_FACTOR",
-        "ELO_PER_POINT",
-    ],
+    ["MIN_GAMES", "MIN_REACH_PCT", "DELTA_EV_THRESHOLD", "P_VALUE_THRESHOLD", "MAX_DEPTH", "BRANCH_FACTOR", "ELO_PER_POINT"],
 )
 DEFAULT_HUNTER_CONFIG = HunterConfig(
     MIN_GAMES=1000,
@@ -107,9 +98,7 @@ class APIManager:
                 self.cache[cache_key] = data
                 return data
             except (json.JSONDecodeError, IOError) as e:
-                print(
-                    f"\n{colorize(f'[WARN] Could not read cache file {os.path.basename(filepath)}: {e}', Colors.YELLOW)}"
-                )
+                print(f"\n{colorize(f'[WARN] Could not read cache file {os.path.basename(filepath)}: {e}', Colors.YELLOW)}")
         params = {"fen": fen, "variant": "standard", "speeds": speeds, "ratings": ratings}
         while True:
             self.call_count += 1
@@ -187,17 +176,7 @@ def calculate_p_value(move_stats, other_stats):
 
 # --- "Line" Mode Logic ---
 def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=None, force_refresh=False):
-    headers = [
-        "Move",
-        "Played by",
-        "Games",
-        "p-value",
-        "EV (×100)",
-        "Raw %",
-        "Move %",
-        "If White Wants %",
-        "If Black Wants %",
-    ]
+    headers = ["Move", "Played by", "Games", "p-value", "EV (×100)", "Raw %", "Move %", "If White Wants %", "If Black Wants %"]
     rows, board, white_wants, black_wants = [], chess.Board(), 1.0, 1.0
     root_data = api_manager.query(board.fen(), speeds, ratings, force_refresh=force_refresh)
     if not root_data or "white" not in root_data:
@@ -295,9 +274,7 @@ def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val
             delta_ev_str = colorize(delta_ev_str, Colors.GREEN)
         elif (turn == "W" and delta_ev < -0.5) or (turn == "B" and delta_ev > 0.5):
             delta_ev_str = colorize(delta_ev_str, Colors.RED)
-        move_san_str = move.get("san", "?") + (
-            colorize(" <-- Best", Colors.BLUE) if move.get("san") == best_move_san else ""
-        )
+        move_san_str = move.get("san", "?") + (colorize(" <-- Best", Colors.BLUE) if move.get("san") == best_move_san else "")
         opening_name = (move.get("opening") or {}).get("name", "-")
         rows.append([move_san_str, f"{total:,}", colorize_ev(move_ev * 100), delta_ev_str, p_str, opening_name])
     print(f"Next Move Statistics for {player_str}:")
@@ -309,11 +286,7 @@ def run_line_mode(args):
     print(f"Speeds: {args.speeds} | Ratings: {args.ratings}")
     interesting_move = getattr(args, "interesting_move_san", None)
     white_reach, black_reach, _, _, line_name = print_line_reachability_stats(
-        args.moves,
-        args.speeds,
-        ratings=args.ratings,
-        interesting_move_san=interesting_move,
-        force_refresh=args.force_refresh,
+        args.moves, args.speeds, ratings=args.ratings, interesting_move_san=interesting_move, force_refresh=args.force_refresh
     )
     final_fen, final_turn = get_fen_from_san_sequence(args.moves)
     if not final_fen:
@@ -329,15 +302,7 @@ def run_line_mode(args):
 
 # --- "Hunt" Mode Logic ---
 def find_interesting_lines_iterative(
-    initial_board,
-    initial_moves,
-    start_white_prob,
-    start_black_prob,
-    speeds,
-    ratings,
-    config,
-    max_finds,
-    force_refresh=False,
+    initial_board, initial_moves, start_white_prob, start_black_prob, speeds, ratings, config, max_finds, force_refresh=False
 ):
     stack = [(initial_board.fen(), initial_moves, None, start_white_prob, start_black_prob, len(initial_moves))]
     visited_nodes, found_count = 0, 0
@@ -346,9 +311,7 @@ def find_interesting_lines_iterative(
         for move in initial_moves[:-1]:
             parent_board.push_san(move)
         stack[0] = (
-            stack[0][:2]
-            + (api_manager.query(parent_board.fen(), speeds, ratings, force_refresh=force_refresh),)
-            + stack[0][3:]
+            stack[0][:2] + (api_manager.query(parent_board.fen(), speeds, ratings, force_refresh=force_refresh),) + stack[0][3:]
         )
     else:
         stack[0] = (
@@ -385,9 +348,7 @@ def find_interesting_lines_iterative(
         pos_ev = (prev_pos_data.get("white", 0) - prev_pos_data.get("black", 0)) / prev_total if prev_total > 0 else 0
         parent_stats = (prev_pos_data.get("white", 0), prev_pos_data.get("draws", 0), prev_pos_data.get("black", 0))
         sorted_moves = sorted(
-            current_data.get("moves", []),
-            key=lambda m: sum(m.get(k, 0) for k in ["white", "draws", "black"]),
-            reverse=True,
+            current_data.get("moves", []), key=lambda m: sum(m.get(k, 0) for k in ["white", "draws", "black"]), reverse=True
         )
         for move_data in sorted_moves:
             w, d, b = (move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0))
@@ -437,9 +398,7 @@ def find_interesting_lines_iterative(
         for move_to_explore in reversed(sorted_moves[: config.BRANCH_FACTOR]):
             new_board = board.copy()
             new_board.push_san(move_to_explore["san"])
-            move_pct = (
-                sum(move_to_explore.get(k, 0) for k in ["white", "draws", "black"]) / total_games if total_games else 0
-            )
+            move_pct = sum(move_to_explore.get(k, 0) for k in ["white", "draws", "black"]) / total_games if total_games else 0
             new_white_prob, new_black_prob = (
                 (white_prob, black_prob * move_pct) if is_white_turn else (white_prob * move_pct, black_prob)
             )
@@ -468,9 +427,7 @@ def run_hunt_mode(args):
     board, start_white_prob, start_black_prob, line_name = chess.Board(), 1.0, 1.0, ""
     if args.moves:
         start_white_prob, start_black_prob, line_name = run_line_mode(
-            argparse.Namespace(
-                moves=args.moves, speeds=args.speeds, ratings=args.ratings, force_refresh=args.force_refresh
-            )
+            argparse.Namespace(moves=args.moves, speeds=args.speeds, ratings=args.ratings, force_refresh=args.force_refresh)
         )
         for move in args.moves:
             try:
@@ -509,9 +466,7 @@ def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
     if root_total_games == 0:
         root_total_games = 1
 
-    root_ev = (
-        (root_data.get("white", 0) - root_data.get("black", 0)) / root_total_games * 100 if root_total_games > 0 else 0
-    )
+    root_ev = (root_data.get("white", 0) - root_data.get("black", 0)) / root_total_games * 100 if root_total_games > 0 else 0
 
     prev_data = root_data
     for move_san in moves:
@@ -567,9 +522,7 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
         ELO_FACTOR = 6
 
         for bucket in PLOT_ELO_BRACKETS:
-            ev, r_, p_, root_ev, name, player = get_stats_for_line(
-                moves, speed, str(bucket), force_refresh=force_refresh
-            )
+            ev, r_, p_, root_ev, name, player = get_stats_for_line(moves, speed, str(bucket), force_refresh=force_refresh)
             print(
                 f"{colorize(f'  [{bucket:>4}]', Colors.GRAY)} EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | Pop: {p_:.2f}% | Base"
                 f" EV: {colorize_ev(root_ev)}"
@@ -715,14 +668,7 @@ def generate_plots(stats_data, speed, outdir):
         # Use the 'compare_openings' layout only for that specific mode
         if plot_mode == "compare_openings":
             ax_header.text(
-                0.5,
-                0.95,
-                "Chess Opening Statistics",
-                color=C["cap"],
-                fontsize=19,
-                weight="semibold",
-                ha="center",
-                va="top",
+                0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top"
             )
             line1_moves = stats_data[0]["move_string"]
             logo1_rect = LOGO_OVERRIDES.get(line1_moves, {}).get("dual_1", DUAL_LOGO1_RECT)
@@ -740,9 +686,7 @@ def generate_plots(stats_data, speed, outdir):
                 box2.imshow(plt.imread(logo2_path))
                 box2.axis("off")
 
-            ax_header.text(
-                0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center"
-            )
+            ax_header.text(0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
         else:  # Use the 'single' layout for both 'single' and 'compare_speeds' modes
             ax_header.text(
                 SINGLE_TEXT_X,
@@ -779,14 +723,7 @@ def generate_plots(stats_data, speed, outdir):
                 va="center",
             )
             ax_header.text(
-                SINGLE_TEXT_X,
-                SINGLE_CHART_TITLE_Y,
-                title,
-                color=color,
-                fontsize=22,
-                weight="bold",
-                ha="left",
-                va="center",
+                SINGLE_TEXT_X, SINGLE_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="left", va="center"
             )
 
             line_moves = line_data["move_string"]
@@ -851,14 +788,7 @@ def generate_plots(stats_data, speed, outdir):
         pad = (max(all_data) - min(all_data)) * 0.1 if all_data else 0.1
         ax_main.set_ylim(min(all_data) - pad - 0.1, max(all_data) + pad + 0.1)
         ax_main.text(
-            0.02,
-            0.98,
-            chart_info["y_label"],
-            transform=ax_main.transAxes,
-            color=C["txt"],
-            fontsize=14,
-            ha="left",
-            va="top",
+            0.02, 0.98, chart_info["y_label"], transform=ax_main.transAxes, color=C["txt"], fontsize=14, ha="left", va="top"
         )
 
         if chart_info["key"] == "performance":
@@ -868,10 +798,7 @@ def generate_plots(stats_data, speed, outdir):
                 xy=(centres[mid], base_gain_data[mid]),
                 xytext=(centres[mid], ax_main.get_ylim()[0] + 0.45 * (ax_main.get_ylim()[1] - ax_main.get_ylim()[0])),
                 arrowprops=dict(
-                    arrowstyle="-|>",
-                    color=C["arrow"],
-                    lw=1.2,
-                    path_effects=[pe.withStroke(linewidth=3, foreground=C["bg"])],
+                    arrowstyle="-|>", color=C["arrow"], lw=1.2, path_effects=[pe.withStroke(linewidth=3, foreground=C["bg"])]
                 ),
                 color=C["arrow"],
                 fontsize=11,
@@ -939,15 +866,11 @@ def run_batch_plot_mode(args):
 
     for i, opening in enumerate(BATCH_OPENINGS):
         print(
-            colorize(
-                f"\n({i + 1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE
-            )
+            colorize(f"\n({i + 1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE)
         )
 
         # We now pass the force_refresh argument from the main command down to the individual plot job.
-        plot_args = argparse.Namespace(
-            moves=opening["moves"].split(), speed=args.speed, force_refresh=args.force_refresh
-        )
+        plot_args = argparse.Namespace(moves=opening["moves"].split(), speed=args.speed, force_refresh=args.force_refresh)
 
         try:
             run_plot_mode(plot_args)
@@ -1083,9 +1006,7 @@ def print_final_summary(args, config, hunt_duration, line_name):
 def signal_handler(sig, frame):
     print(colorize("\n\nHunt interrupted by user.", Colors.YELLOW))
     if "hunt_start_time" in globals() and "interrupted_args" in globals() and found_lines:
-        print_final_summary(
-            interrupted_args, DEFAULT_HUNTER_CONFIG, time.time() - hunt_start_time, interrupted_line_name
-        )
+        print_final_summary(interrupted_args, DEFAULT_HUNTER_CONFIG, time.time() - hunt_start_time, interrupted_line_name)
     print(f"\nTotal API calls made during this session: {api_manager.call_count}")
     sys.exit(0)
 
@@ -1105,9 +1026,7 @@ def main():
     parser_line = subparsers.add_parser("line", help="Analyze a single, specific line of moves.")
     parser_line.add_argument("moves", nargs="+", help="Move list in SAN (e.g., e4 e5 Nf3 Nc6)")
     parser_line.add_argument(
-        "--speeds",
-        default="blitz,rapid,classical",
-        help="Comma-separated speed filters. Default: blitz,rapid,classical",
+        "--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters. Default: blitz,rapid,classical"
     )
     parser_line.add_argument(
         "--ratings",
@@ -1127,9 +1046,7 @@ def main():
     parser_hunt = subparsers.add_parser("hunt", help="Recursively search for interesting opportunities and blunders.")
     parser_hunt.add_argument("moves", nargs="*", help="Optional initial move sequence to start the hunt from.")
     parser_hunt.add_argument(
-        "--speeds",
-        default="blitz,rapid,classical",
-        help="Comma-separated speed filters. Default: blitz,rapid,classical",
+        "--speeds", default="blitz,rapid,classical", help="Comma-separated speed filters. Default: blitz,rapid,classical"
     )
     parser_hunt.add_argument(
         "--ratings",
@@ -1174,9 +1091,7 @@ def main():
     )
     parser_compare.set_defaults(func=run_compare_mode)
 
-    parser_batchplot = subparsers.add_parser(
-        "batchplot", help="Generate plots for a predefined list of major openings."
-    )
+    parser_batchplot = subparsers.add_parser("batchplot", help="Generate plots for a predefined list of major openings.")
     parser_batchplot.add_argument(
         "--speed",
         default="rapid",
