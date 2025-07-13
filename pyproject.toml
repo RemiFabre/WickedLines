@@ -13,7 +13,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black==23.12.1",
+    "black>=23.12.1",
     "isort",
     "flake8",
     "pytest"
@@ -22,6 +22,7 @@ dev = [
 [tool.black]
 line-length = 128
 target-version = ["py310"]
+skip-magic-trailing-comma = true  # disables the “explode on trailing comma” rule
 
 [tool.isort]
 profile = "black"

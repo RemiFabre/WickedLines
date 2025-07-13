@@ -16,13 +16,6 @@ import requests
 from scipy.stats import chi2_contingency
 from tabulate import tabulate
 
-# --- Matplotlib Dependency ---
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    print("Matplotlib not found. Please install it with: pip install matplotlib")
-    sys.exit(1)
-
 # --- Configuration ---
 HunterConfig = namedtuple(
     "HunterConfig",
@@ -77,7 +70,7 @@ PLOT_COLORS = ["#57a8d8", "#f07c32", "#c875c4", "#4ecdc4", "#ffc300", "#c70039",
 
 # --- Global State & Classes ---
 class Colors:
-    GREEN, RED, BLUE, YELLOW, GRAY, END = "\033[92m", "\033[91m", "\033[94m", "\033[93m", "\033[90m", "\033[0m"
+    GREEN, RED, BLUE, YELLOW, GRAY, END = ("\033[92m", "\033[91m", "\033[94m", "\033[93m", "\033[90m", "\033[0m")
 
 
 class APIManager:
@@ -199,8 +192,8 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
         move_data = next((m for m in prev_data.get("moves", []) if m.get("san") == move_san), None)
         if not move_data:
             break
-        w, d, b = move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0)
-        parent_w, parent_d, parent_b = prev_data.get("white", 0), prev_data.get("draws", 0), prev_data.get("black", 0)
+        w, d, b = (move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0))
+        parent_w, parent_d, parent_b = (prev_data.get("white", 0), prev_data.get("draws", 0), prev_data.get("black", 0))
         other_stats = (parent_w - w, parent_d - d, parent_b - b)
         p_value = calculate_p_value((w, d, b), other_stats)
         if p_value < 0.001:
@@ -233,16 +226,16 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
                 f"{total:,}",
                 p_str,
                 colorize_ev(ev),
-                f"{(total/root_total*100):.2f}",
-                f"{move_pct*100:.2f}",
-                f"{white_wants*100:.2f}",
-                f"{black_wants*100:.2f}",
+                f"{(total / root_total * 100):.2f}",
+                f"{move_pct * 100:.2f}",
+                f"{white_wants * 100:.2f}",
+                f"{black_wants * 100:.2f}",
             ]
         )
         prev_data = current_data
         line_name = (current_data.get("opening") or {}).get("name")
     print(tabulate(rows, headers=headers, tablefmt="pretty"))
-    return white_wants * 100, black_wants * 100, "W" if board.turn == chess.WHITE else "B", moves, line_name
+    return (white_wants * 100, black_wants * 100, "W" if board.turn == chess.WHITE else "B", moves, line_name)
 
 
 def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val_thresh):
@@ -250,7 +243,7 @@ def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val
     print(f"\nFinal Position (FEN): {fen}\nLichess URL: {generate_lichess_url(move_list)}")
     print(f"If White wants, this position will be reached {white_reach:.2f}% of the time.")
     print(f"If Black wants, this position will be reached {black_reach:.2f}% of the time.\n")
-    pos_w, pos_d, pos_b = data.get("white", 0), data.get("draws", 0), data.get("black", 0)
+    pos_w, pos_d, pos_b = (data.get("white", 0), data.get("draws", 0), data.get("black", 0))
     pos_total = pos_w + pos_d + pos_b
     pos_ev = ((pos_w - pos_b) / pos_total) if pos_total else 0
     best_move_san = None
@@ -263,7 +256,6 @@ def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val
         if moves_with_stats:
             best_move_san = (max if turn == "W" else min)(moves_with_stats, key=lambda x: x["ev"])["san"]
     headers, rows = ["Move", "Games", "EV", "ΔEV", "p-value", "Opening"], []
-    parent_stats = (pos_w, pos_d, pos_b)
     for move in data.get("moves", []):
         w, d, b = move.get("white", 0), move.get("draws", 0), move.get("black", 0)
         total = w + d + b
@@ -337,7 +329,8 @@ def find_interesting_lines_iterative(
         visited_nodes += 1
         indent = "  " * (depth - len(initial_moves))
         print(
-            f"\r{indent}{colorize(f'[{visited_nodes: >3}|{len(stack): >3}]', Colors.GRAY)} Searching: {' '.join(move_history) or '(start)'}...",
+            f"\r{indent}{colorize(f'[{visited_nodes: >3}|{len(stack): >3}]', Colors.GRAY)} Searching:"
+            f" {' '.join(move_history) or '(start)'}...",
             " " * 20,
             end="",
         )
@@ -358,7 +351,7 @@ def find_interesting_lines_iterative(
             current_data.get("moves", []), key=lambda m: sum(m.get(k, 0) for k in ["white", "draws", "black"]), reverse=True
         )
         for move_data in sorted_moves:
-            w, d, b = move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0)
+            w, d, b = (move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0))
             move_total = w + d + b
             if move_total < config.MIN_GAMES:
                 continue
@@ -386,7 +379,10 @@ def find_interesting_lines_iterative(
                         "reach_pct": reach_prob * 100,
                     }
                     found_lines.append(report)
-                    title = f" FOUND OPPORTUNITY FOR {player_name} #{found_count} | ΔEV: {delta_ev:+.1f} | ELO Gain/100: {elo_gain:+.2f} "
+                    title = (
+                        f" FOUND OPPORTUNITY FOR {player_name} #{found_count} | ΔEV: {delta_ev:+.1f} | ELO Gain/100:"
+                        f" {elo_gain:+.2f} "
+                    )
                     print()
                     print(colorize("\n" + title.center(85, "="), Colors.BLUE))
                     run_line_mode(
@@ -425,7 +421,8 @@ def run_hunt_mode(args):
     hunt_start_time = time.time()
     print("--- WickedLines Blunder Hunt ---")
     print(
-        f"Config: Min Games={config.MIN_GAMES}, Min Reach%={config.MIN_REACH_PCT}, ΔEV>|{config.DELTA_EV_THRESHOLD}|, p<{config.P_VALUE_THRESHOLD}, Branch={config.BRANCH_FACTOR}, ELO Gain Factor={config.ELO_PER_POINT}"
+        f"Config: Min Games={config.MIN_GAMES}, Min Reach%={config.MIN_REACH_PCT}, ΔEV>|{config.DELTA_EV_THRESHOLD}|,"
+        f" p<{config.P_VALUE_THRESHOLD}, Branch={config.BRANCH_FACTOR}, ELO Gain Factor={config.ELO_PER_POINT}"
     )
     board, start_white_prob, start_black_prob, line_name = chess.Board(), 1.0, 1.0, ""
     if args.moves:
@@ -500,16 +497,13 @@ def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
     final_pos_total_games = sum(final_data.get(k, 0) for k in ["white", "draws", "black"])
     popularity = final_pos_total_games / root_total_games if root_total_games > 0 else 0
     if final_pos_total_games == 0:
-        return 0, reachability * 100, popularity * 100, root_ev, line_name, forcing_player
+        return (0, reachability * 100, popularity * 100, root_ev, line_name, forcing_player)
     ev = (
         (final_data.get("white", 0) - final_data.get("black", 0)) / final_pos_total_games * 100
         if final_pos_total_games > 0
         else 0
     )
     return ev, reachability * 100, popularity * 100, root_ev, line_name, forcing_player
-
-
-# --- Replace the old "run_plot_mode" function with these three new functions ---
 
 
 def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
@@ -521,7 +515,7 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
     all_stats = []
     for move_str in move_strings:
         moves = move_str.split()
-        print(colorize(f"\nFetching data for line: {move_str}", Colors.YELLOW))
+        print(colorize(f"\nFetching data for line: {move_str} ({speed})", Colors.YELLOW))
 
         elo_gain, base_gain, reach, pop, theory = [], [], [], [], []
         final_name, forcing_player = "Unknown Opening", "White"
@@ -530,7 +524,8 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
         for bucket in PLOT_ELO_BRACKETS:
             ev, r_, p_, root_ev, name, player = get_stats_for_line(moves, speed, str(bucket), force_refresh=force_refresh)
             print(
-                f"{colorize(f'  [{bucket:>4}]', Colors.GRAY)} EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | Pop: {p_:.2f}% | Base EV: {colorize_ev(root_ev)}"
+                f"{colorize(f'  [{bucket:>4}]', Colors.GRAY)} EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | Pop: {p_:.2f}% | Base"
+                f" EV: {colorize_ev(root_ev)}"
             )
             adj, base = (ev, root_ev) if player == "White" else (-ev, -root_ev)
             elo_gain.append(adj * ELO_FACTOR)
@@ -563,7 +558,6 @@ def generate_plots(stats_data, speed, outdir):
     Core plotting engine. Generates 1080x1350 charts with a refined,
     professional layout for both single and dual-logo modes.
     """
-    import textwrap
 
     import matplotlib.pyplot as plt
     import numpy as np
@@ -602,18 +596,30 @@ def generate_plots(stats_data, speed, outdir):
     DUAL_CHART_TITLE_Y = 0.12
     # --- END OF TWEAKABLES ---
 
-    is_comparison = len(stats_data) > 1 and len(stats_data) == 2
+    # Dynamically determine the plot mode ---
+    plot_mode = "single"
+    if len(stats_data) > 1:
+        # Check if all move strings are the same. If so, we are comparing speeds.
+        all_moves_same = len(set(s["move_string"] for s in stats_data)) == 1
+        if all_moves_same:
+            plot_mode = "compare_speeds"
+        else:
+            plot_mode = "compare_openings"
 
     # Determine output directory based on opening color
-    # Use the first line to determine if it's a White or Black opening
-    # Odd number of moves = White's turn, Even = Black's turn
     color_folder = "white" if len(stats_data[0]["moves"]) % 2 != 0 else "black"
 
-    # Define the specific folder name for this plot run, which also serves as the filename prefix
-    filename_prefix = "_vs_".join(s["move_string"].replace(" ", "_") for s in stats_data).lower() + f"_{speed}"
+    # Smarter filename generation based on plot_mode ---
+    if plot_mode == "compare_openings":
+        # Classic comparison filename: opening1_vs_opening2_speed.png
+        filename_prefix = "_vs_".join(s["move_string"].replace(" ", "_") for s in stats_data).lower() + f"_{speed}"
+    else:  # Covers 'single' and 'compare_speeds'
+        # New filename for single opening: opening_speed1_speed2.png
+        moves_slug = stats_data[0]["move_string"].replace(" ", "_").lower()
+        speeds_slug = speed.replace(",", "_").lower()
+        filename_prefix = f"{moves_slug}_{speeds_slug}"
 
     # Create the final output path, e.g., "plots/black/e4_c5_rapid"
-    # This now defines the 'outdir' used throughout the function.
     outdir = os.path.join("plots", color_folder, filename_prefix)
     os.makedirs(outdir, exist_ok=True)
 
@@ -654,18 +660,16 @@ def generate_plots(stats_data, speed, outdir):
     ]
 
     def save(fig, tag, filename_prefix):
-        # The 'outdir' variable is now the correct, nested path.
         filepath = os.path.join(outdir, f"{filename_prefix}_{tag}.png")
         fig.savefig(filepath, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0.1)
         plt.close(fig)
 
     def header(ax_header, title, color):
-        if is_comparison:
+        # Use the 'compare_openings' layout only for that specific mode
+        if plot_mode == "compare_openings":
             ax_header.text(
                 0.5, 0.95, "Chess Opening Statistics", color=C["cap"], fontsize=19, weight="semibold", ha="center", va="top"
             )
-            # ax_header.text(0.5, 0.5, "vs", color=C["txt"], fontsize=30, weight="bold", ha="center", va="center")
-
             line1_moves = stats_data[0]["move_string"]
             logo1_rect = LOGO_OVERRIDES.get(line1_moves, {}).get("dual_1", DUAL_LOGO1_RECT)
             logo1_path = f"./logos/{''.join(stats_data[0]['moves'])}_logo.png"
@@ -683,7 +687,7 @@ def generate_plots(stats_data, speed, outdir):
                 box2.axis("off")
 
             ax_header.text(0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center")
-        else:
+        else:  # Use the 'single' layout for both 'single' and 'compare_speeds' modes
             ax_header.text(
                 SINGLE_TEXT_X,
                 0.95,
@@ -705,7 +709,9 @@ def generate_plots(stats_data, speed, outdir):
                 ha="left",
                 va="center",
             )
-            sub_title = f"({' '.join(line_data['moves'])}) — {speed.capitalize()}"
+            # Format the speed string nicely (e.g., "Blitz, Rapid, Classical")
+            speeds_formatted = speed.replace(",", ", ").title()
+            sub_title = f"({' '.join(line_data['moves'])}) — {speeds_formatted}"
             ax_header.text(
                 SINGLE_TEXT_X,
                 SINGLE_SUB_TITLE_Y,
@@ -753,13 +759,24 @@ def generate_plots(stats_data, speed, outdir):
 
         all_data = []
         for j, line_data in enumerate(stats_data):
-            if is_comparison:
+            # Use different colors if we are comparing anything (speeds or openings)
+            if plot_mode in ["compare_speeds", "compare_openings"]:
                 color = PLOT_COLORS[j % len(PLOT_COLORS)]
-            else:
+            else:  # Single plot mode
                 color = chart_info["color"]
+
             data = line_data[chart_info["data_key"]]
             all_data.extend(data)
-            label = f"{line_data['name']} ({line_data['move_string']})"
+
+            # Smarter legend label generation ---
+            label = None
+            if plot_mode == "compare_speeds":
+                # Legend shows the speed: "Rapid", "Blitz", etc.
+                label = line_data["speed"].capitalize()
+            elif plot_mode == "compare_openings":
+                # Legend shows the opening name and moves
+                label = f"{line_data['name']} ({line_data['move_string']})"
+
             smooth(ax_main, centres, data, color, label=label)
 
         if chart_info["key"] == "performance":
@@ -788,7 +805,12 @@ def generate_plots(stats_data, speed, outdir):
                 ha="center",
             )
 
-        ax_main.legend(facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="lower left", fancybox=True)
+        # Only show a legend if there's something to compare
+        if plot_mode != "single":
+            ax_main.legend(
+                facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="lower left", fancybox=True
+            )
+
         fig.supxlabel("Created with open source tool WickedLines, join the project!", color=C["cap"], fontsize=12)
         save(fig, chart_info["key"], filename_prefix)
 
@@ -797,12 +819,35 @@ def generate_plots(stats_data, speed, outdir):
 
 def run_plot_mode(args):
     """Handler for the 'plot' command."""
+    # Get the single move string for this plot run.
     move_string = " ".join(args.moves)
-    stats_data = fetch_stats_for_lines([move_string], args.speed, args.force_refresh)
+
+    # Parse the comma-separated speeds argument into a list of individual speeds.
+    speeds_list = [s.strip() for s in args.speeds.split(",")]
+
+    # This list will hold the full statistics for each speed.
+    stats_data = []
+
+    # Loop through each requested speed, fetch its data, and aggregate it.
+    for speed in speeds_list:
+        # fetch_stats_for_lines returns a list of dictionaries. Since we are
+        # only fetching for one opening at a time here, we take the first element [0].
+        line_data = fetch_stats_for_lines([move_string], speed, args.force_refresh)[0]
+
+        # We tag the data with its speed. This allows the plotting function
+        # to differentiate the lines in the legend when multiple speeds are plotted.
+        line_data["speed"] = speed
+        stats_data.append(line_data)
+
+    # Generate a unique directory and filename prefix based on the moves and speeds.
+    # e.g., "plots/e4_c5_blitz_rapid"
     moves_id = "_".join(args.moves).lower()
-    speed_id = args.speed.lower()
+    speed_id = args.speeds.replace(",", "_").lower()
     outdir = os.path.join("plots", f"{moves_id}_{speed_id}")
-    generate_plots(stats_data, args.speed, outdir)
+
+    # Call the main plotting function. It can handle multiple data sets in stats_data.
+    # We pass the original comma-separated string for potential use in titles.
+    generate_plots(stats_data, args.speeds, outdir)
 
 
 def run_compare_mode(args):
@@ -820,7 +865,9 @@ def run_batch_plot_mode(args):
     print(f"Plots will be saved to the '{os.path.join(os.getcwd(), 'plots')}' directory.")
 
     for i, opening in enumerate(BATCH_OPENINGS):
-        print(colorize(f"\n({i+1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE))
+        print(
+            colorize(f"\n({i + 1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE)
+        )
 
         # We now pass the force_refresh argument from the main command down to the individual plot job.
         plot_args = argparse.Namespace(moves=opening["moves"].split(), speed=args.speed, force_refresh=args.force_refresh)
@@ -894,7 +941,8 @@ def update_hunt_index(results_dir="hunt_results"):
                     f.write(f"## Hunt Reports for: `{line if line else 'Start Position'}`\n\n")
                     for report in reports:
                         f.write(
-                            f"- **Ratings**: `{report.get('ratings','N/A')}` | **Speeds**: `{report.get('speeds','N/A')}` | **Config**: `{report.get('config_str','N/A')}` -> **[View Report]({report['path']})**\n"
+                            f"- **Ratings**: `{report.get('ratings', 'N/A')}` | **Speeds**: `{report.get('speeds', 'N/A')}` |"
+                            f" **Config**: `{report.get('config_str', 'N/A')}` -> **[View Report]({report['path']})**\n"
                         )
                     f.write("\n")
         print(colorize(f"Updated master index file: {index_path}", Colors.YELLOW))
@@ -914,7 +962,8 @@ def print_final_summary(args, config, hunt_duration, line_name):
     file_output.append(f"\n- **Date:** `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`")
     file_output.append(f"- **Ratings:** `{args.ratings}` | **Speeds:** `{args.speeds}`")
     file_output.append(
-        f"- **Config:** Min Games=`{config.MIN_GAMES}`, Max Depth=`{config.MAX_DEPTH}`, Min Reach=`{config.MIN_REACH_PCT}%`, Branch Factor=`{config.BRANCH_FACTOR}`"
+        f"- **Config:** Min Games=`{config.MIN_GAMES}`, Max Depth=`{config.MAX_DEPTH}`, Min Reach=`{config.MIN_REACH_PCT}%`,"
+        f" Branch Factor=`{config.BRANCH_FACTOR}`"
     )
     file_output.append(f"- **Analysis Duration:** `{hunt_duration:.2f} seconds`")
     file_output.append(f"- **API Calls:** `{api_manager.call_count}`")
@@ -1018,10 +1067,9 @@ def main():
     parser_plot = subparsers.add_parser("plot", help="Plot the performance of an opening across all ELO ratings.")
     parser_plot.add_argument("moves", nargs="+", help="Move list in SAN to plot (e.g., e4 c6).")
     parser_plot.add_argument(
-        "--speed",
+        "--speeds",
         default="rapid",
-        choices=["blitz", "rapid", "classical"],
-        help="A single, fixed time control for the plot. Default: rapid.",
+        help="A single or comma-separated list of time controls for the plot (e.g., blitz,rapid). Default: rapid.",
     )
     parser_plot.add_argument(
         "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
