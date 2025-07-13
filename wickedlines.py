@@ -625,8 +625,21 @@ def generate_plots(stats_data, speed, outdir):
     os.makedirs(outdir, exist_ok=True)
 
     buckets = [int(b) for b in PLOT_ELO_BRACKETS]
-    centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])] + [2600]
-    tick_labels = [str(int(c)) if c != 2600 else "2500+" for c in centres]
+    # First, calculate the centers for all defined intervals
+    centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])]
+
+    if buckets and buckets[-1] == 2500:
+        # Special case for the 2500+ open-ended bucket
+        centres.append(2600)
+        tick_labels = [str(int(c)) for c in centres[:-1]] + ["2500+"]
+    elif buckets:
+        # Standard case for the last bucket (e.g., 2200-2399)
+        # Assume a 200-point width, so the center is start + 100
+        centres.append(buckets[-1] + 100)
+        tick_labels = [str(int(c)) for c in centres]
+    else:
+        # Fallback for an empty bucket list
+        tick_labels = []
 
     C = dict(bg="#121212", grid="#444", txt="#e9e9e9", cap="#c7c7c7", base="#b0b0b0", arrow="#efd545")
     charts = [
@@ -699,13 +712,30 @@ def generate_plots(stats_data, speed, outdir):
                 ha="left",
                 va="top",
             )
+            # Dynamically adjust font size for long opening names using a continuous formula.
             line_data = stats_data[0]
+            opening_name = line_data["name"]
+            name_len = len(opening_name)
+
+            # Define the parameters for scaling
+            max_fs, min_fs = 16, 10  # Max and min font sizes
+            start_len, max_len = 25, 40  # Character lengths at which scaling starts and ends
+
+            if name_len <= start_len:
+                main_title_fontsize = max_fs
+            elif name_len >= max_len:
+                main_title_fontsize = min_fs
+            else:
+                # Linear interpolation between the start and max lengths
+                progress = (name_len - start_len) / (max_len - start_len)
+                main_title_fontsize = max_fs - progress * (max_fs - min_fs)
+
             ax_header.text(
                 SINGLE_TEXT_X,
                 SINGLE_MAIN_TITLE_Y,
-                line_data["name"],
+                opening_name,
                 color=C["txt"],
-                fontsize=16,
+                fontsize=main_title_fontsize,  # Use the new dynamic font size
                 weight="bold",
                 ha="left",
                 va="center",
