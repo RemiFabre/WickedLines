@@ -8,9 +8,9 @@ The following plots were generated with **WickedLines** (contributions welcome),
 
 ### How to Read the Graphs:
 
-*   **Expected Elo Gain / 100 Games**: The expected rating point change from playing this line 100 times. Positive is good for White.
-*   **Average White Elo Gain**: A baseline showing White's average performance from move 1.
-*   **Reachability %**: Your chance to get this opening on the board if you try (as White).
+*   **Expected Elo Gain / 100 Games**: The expected rating point change from playing this line 100 times. Positive is good for the player that made the last move.
+*   **Average White Elo Gain**: A baseline showing average performance from move 1 (for White or Black depending on the opening).
+*   **Reachability %**: Your chance to get this opening on the board if you try.
 *   **Popularity %**: How often this opening is seen in all games.
 *   **Theory Advantage**: Reachability / Popularity. A measure of surprise value and preparation efficiency.
 
@@ -55,9 +55,9 @@ These charts were generated for the following openings:
 
 ### My Prediction (and Why It Was Wrong)
 
-My initial hypothesis was straightforward: a stronger player with less time should, on average, play like a slightly weaker player with more time. There's a point of diminishing returns for each extra minute you think, but the general effect should be clear.
+My initial hypothesis was straightforward: strong players with less time should, on average, play like a slightly weaker players with more time. There's a point of diminishing returns for each extra minute you think, but the general effect should be clear.
 
-Graphically, I expected to see a simple shift along the x-axis. I thought I could take a performance curve from Blitz, slide it to the right, and have it roughly match the curve for Rapid. Slide it again, and it would match Classical.
+Graphically, I expected to see a simple shift along the x-axis. I thought I could take a performance curve from Blitz, slide it to the left, and have it roughly match the curve for Rapid. Slide it again, and it would match Classical.
 
 This turned out to be completely wrong. Here is what I observed across the ~25 openings I plotted.
 
@@ -73,7 +73,7 @@ On the surface, this might seem trivial, but I think it's profound, and I'm not 
 
 One might offer a simple explanation: "This makes sense. If a position holds a genuine, objective advantage, more time allows a player to calculate more precisely and maximize it." But I think this is a lazy explanation, and possibly wrong.
 
-To emphasize why this is non-trivial, let's imagine for a second that the curves were inverted—that performance was more extreme in Blitz than in Classical. It would be very easy for me to give a convincing explanation: 'Of course! In Blitz, once a player has an advantage, the defender doesn't have enough time to dismantle it. The chaos of lower time controls naturally exacerbates any edge.'
+To emphasize why this is non-trivial, let's imagine for a second that the curves were inverted, that performance was more extreme in Blitz than in Classical. It would be very easy for me to give a convincing explanation: 'Of course! In Blitz, once a player has an advantage, the defender doesn't have enough time to dismantle it. The chaos of lower time controls naturally exacerbates any edge.'
 
 That explanation sounds perfectly plausible, doesn't it? Yet we observe the exact opposite. This is why I want to be very careful in providing an intuitive explanation for what we're seeing.
 
@@ -81,7 +81,7 @@ Could this mean that converting a practical advantage is fundamentally harder (r
 
 It is important to note that:
 *   These observations are based on opening data. We might see a different picture if we were to study specific middle-game states.
-*   These observations are based on human performance for Elos below ~2300. We know that draw rates increase significantly at higher levels, and these findings are about the nature of *humans playing chess*, not necessarily about the objective nature of the game itself.
+*   These observations are based on human performance for Elos below ~2300. We know that draw rates increase significantly at higher levels and that there is a lot of skill expression in the game above 2300. So these findings are about the nature of *humans playing chess*, not necessarily about the objective nature of the game itself.
 
 I'm very interested in having your opinion on this.
 
