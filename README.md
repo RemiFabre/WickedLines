@@ -12,13 +12,13 @@
 </p>
 
 
-WickedLines is a command-line tool for analyzing chess opening lines using the Lichess game database. It has three primary modes:
+WickedLines is a command-line tool for analyzing chess opening lines using the Lichess game database. It has five primary modes:
 
-    line mode: A deep-dive analysis of a single, specific opening variation.
-
-    hunt mode: An automatic, recursive search to discover statistically significant opportunities and blunders hidden in opening lines.
-
-    plot mode: Visualizes an opening's performance and popularity across different ELO levels.
+-   `line`: A deep-dive analysis of a single, specific opening variation.
+-   `hunt`: An automatic, recursive search to discover statistically significant opportunities and blunders.
+-   `plot`: Visualizes an opening's performance and popularity across different ELO levels, with the ability to compare multiple time controls.
+-   `compare`: Plots multiple different openings on the same charts for direct comparison.
+-   `batchplot`: Automatically generates plots for a predefined list of major openings.
 
 The tool helps you prioritize your study by focusing on variations that are reachable, statistically sound, and offer the greatest practical impact on your rating.
 
@@ -97,22 +97,55 @@ Use this to automatically search for high-impact moves.
 
 ### `plot` Mode: Visualize a Line's Performance
 
-Use this to see how an opening's effectiveness, reachability, and general popularity change across different skill levels.
+Use this to see how an opening's effectiveness changes across skill levels. You can also compare multiple time controls on the same chart.
 
 **Syntax:**
 
     python wickedlines.py plot [moves...] [options...]
 
+**Examples:**
+
+    # Plot the performance of the Caro-Kann in rapid games
+    python wickedlines.py plot e4 c6 --speeds rapid
+
+    # Compare Blitz vs Rapid performance for the Caro-Kann on the same plots
+    python wickedlines.py plot e4 c6 --speeds blitz,rapid
+
+### `compare` Mode: Compare Different Openings
+
+Directly compare the statistics of two or more openings on the same set of plots.
+
+**Syntax:**
+
+    python wickedlines.py compare "[moves_1...]" "[moves_2...]" [options...]
+
 **Example:**
 
-    # Plot the performance of the King's Gambit in rapid games
-    python wickedlines.py plot e4 e5 f4 --speed rapid
+    # Compare the Sicilian Defense vs the French Defense in rapid games
+    python wickedlines.py compare "e4 c5" "e4 e6" --speed rapid
+
+### `batchplot` Mode: Generate All Major Opening Plots
+
+Automatically generates a full set of plots for a predefined list of common openings.
+
+**Syntax:**
+
+    python wickedlines.py batchplot [options...]
+
+**Example:**
+
+    # Generate plots for all major openings using rapid stats
+    python wickedlines.py batchplot --speeds rapid
+
+    # Generate comparison plots (e.g. Blitz vs Rapid) for all major openings
+    python wickedlines.py batchplot --speeds blitz,rapid
 
 ### Command-Line Arguments
-*   `moves`: A sequence of moves in SAN. Required for `line` mode, optional for `hunt` mode.
-*   `--ratings`: (Optional) Comma-separated rating brackets. Default: `1400,1600,1800`.
-*   `--speeds`: (Optional) Comma-separated time controls. Default: `blitz,rapid,classical`.
+*   `moves` / `move_strings`: A sequence of moves in SAN.
+*   `--ratings`: (Optional) Comma-separated rating brackets (e.g., `1600,1800`). Default: `1600`.
+*   `--speeds` / `--speed`: (Optional) Comma-separated time controls (e.g., `blitz,rapid`). Default varies by mode.
 *   `--max-finds N`: (For `hunt` mode) Stop the search after finding `N` interesting lines.
+*   `--force-refresh`: (For all modes) Ignore the local cache and fetch fresh data from the Lichess API. Useful for getting the most up-to-date stats.
 
 ## How to Read the Output
 
@@ -152,19 +185,15 @@ The summary is presented as a series of "cards" for readability:
 
 This format allows you to quickly identify the most profitable lines to add to your repertoire.
 
-### `plot` Mode Output
-This mode generates a professional, two-part figure that visualizes an opening's performance and usage statistics across ELO brackets. The plot is displayed on-screen and also saved to the `plots/` directory.
+### `plot`, `compare`, and `batchplot` Mode Output
+These modes generate a series of PNG charts saved to the `plots/` directory, organized by opening. Four distinct charts are created for each analysis:
 
-The figure is split into two charts that share the same ELO x-axis for easy comparison:
+-   **Performance:** Shows the expected ELO gain per 100 games played with this opening. Note that in plot modes, this metric is not reduced by the reachability factor.  A baseline is included to show if the opening performs better or worse than average for the player to move.
+-   **Reachability:** Shows the percentage chance of reaching the position if one player wants it. This is a key metric for practicality.
+-   **Popularity:** Shows the raw percentage of games that feature this line. This helps you understand how mainstream the opening is.
+-   **Surprise:** A calculated metric (Reachability / Popularity) that highlights lines that are easy for one player to force but are not well-known by the general player base. High surprise factor lines can be potent weapons.
 
-**1. Top Chart (Performance vs. Reachability)**
-*   **Expected Value (EV):** The main blue line, showing the statistical score of the position at each ELO level.
-*   **Reachability %:** The dashed red line, plotted against the right-hand y-axis. It shows how often a player can expect to get this line if they actively try for it.
-
-**2. Bottom Chart (Overall Popularity)**
-*   **Popularity % (Raw):** This purple dotted line gets its own chart to make its typically smaller values clearly visible. It shows how often the line appears in the database out of all total games.
-
-This layout allows for a clear, uncluttered view of the key metrics, helping you understand not only if an opening is good, but also how practical and common it is at different skill levels.
+When comparing multiple speeds (e.g., `plot e4 c6 --speeds blitz,rapid`) or multiple openings (e.g., `compare "e4 c5" "e4 e6"`), the lines will be drawn on the same chart with a legend for easy comparison.
 
 <p align="center">
   <img src="plots/white/d4_d5_c4_rapid/d4_d5_c4_rapid_reachability.png"   width="45%" alt="Reachability">&nbsp;
