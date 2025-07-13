@@ -869,8 +869,8 @@ def run_batch_plot_mode(args):
             colorize(f"\n({i + 1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE)
         )
 
-        # We now pass the force_refresh argument from the main command down to the individual plot job.
-        plot_args = argparse.Namespace(moves=opening["moves"].split(), speed=args.speed, force_refresh=args.force_refresh)
+        # We now pass the force_refresh argument and the list of speeds down to the individual plot job.
+        plot_args = argparse.Namespace(moves=opening["moves"].split(), speeds=args.speeds, force_refresh=args.force_refresh)
 
         try:
             run_plot_mode(plot_args)
@@ -1093,10 +1093,9 @@ def main():
 
     parser_batchplot = subparsers.add_parser("batchplot", help="Generate plots for a predefined list of major openings.")
     parser_batchplot.add_argument(
-        "--speed",
+        "--speeds",
         default="rapid",
-        choices=["blitz", "rapid", "classical"],
-        help="A single, fixed time control for all plots. Default: rapid.",
+        help="A single or comma-separated list of time controls for all plots (e.g., blitz,rapid). Default: rapid.",
     )
     parser_batchplot.add_argument(
         "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
