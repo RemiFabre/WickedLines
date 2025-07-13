@@ -31,7 +31,8 @@ DEFAULT_HUNTER_CONFIG = HunterConfig(
     ELO_PER_POINT=8,
 )
 # Align with Lichess API enum
-PLOT_ELO_BRACKETS = ["0", "1000", "1200", "1400", "1600", "1800", "2000", "2200", "2500"]
+# PLOT_ELO_BRACKETS = ["0", "1000", "1200", "1400", "1600", "1800", "2000", "2200", "2500"]
+PLOT_ELO_BRACKETS = ["0", "1000", "1200", "1400", "1600", "1800", "2000", "2200"]
 
 # Predefined list of openings for batch plotting
 BATCH_OPENINGS = [
@@ -751,6 +752,7 @@ def generate_plots(stats_data, speed, outdir):
         for s in ax_main.spines.values():
             s.set_edgecolor(C["grid"])
         ax_main.tick_params(colors=C["txt"], labelsize=13, pad=8)
+        ax_main.ticklabel_format(useOffset=False, style="plain", axis="y")
 
         header(ax_header, chart_info["title"], chart_info["color"])
         ax_main.set_xlabel("Player rating (Lichess)", labelpad=15, color=C["txt"], fontsize=16)
