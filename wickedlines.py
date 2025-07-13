@@ -40,17 +40,7 @@ DEFAULT_HUNTER_CONFIG = HunterConfig(
     ELO_PER_POINT=8,
 )
 # Align with Lichess API enum
-PLOT_ELO_BRACKETS = [
-    "0",
-    "1000",
-    "1200",
-    "1400",
-    "1600",
-    "1800",
-    "2000",
-    "2200",
-    "2500",
-]
+PLOT_ELO_BRACKETS = ["0", "1000", "1200", "1400", "1600", "1800", "2000", "2200", "2500"]
 
 # Predefined list of openings for batch plotting
 BATCH_OPENINGS = [
@@ -84,27 +74,12 @@ BATCH_OPENINGS = [
     {"name": "Réti Opening", "moves": "Nf3 d5 c4"},
 ]
 
-PLOT_COLORS = [
-    "#57a8d8",
-    "#f07c32",
-    "#c875c4",
-    "#4ecdc4",
-    "#ffc300",
-    "#c70039",
-    "#aed581",
-]
+PLOT_COLORS = ["#57a8d8", "#f07c32", "#c875c4", "#4ecdc4", "#ffc300", "#c70039", "#aed581"]
 
 
 # --- Global State & Classes ---
 class Colors:
-    GREEN, RED, BLUE, YELLOW, GRAY, END = (
-        "\033[92m",
-        "\033[91m",
-        "\033[94m",
-        "\033[93m",
-        "\033[90m",
-        "\033[0m",
-    )
+    GREEN, RED, BLUE, YELLOW, GRAY, END = ("\033[92m", "\033[91m", "\033[94m", "\033[93m", "\033[90m", "\033[0m")
 
 
 class APIManager:
@@ -132,13 +107,10 @@ class APIManager:
                 self.cache[cache_key] = data
                 return data
             except (json.JSONDecodeError, IOError) as e:
-                print(f"\n{colorize(f'[WARN] Could not read cache file {os.path.basename(filepath)}: {e}', Colors.YELLOW)}")
-        params = {
-            "fen": fen,
-            "variant": "standard",
-            "speeds": speeds,
-            "ratings": ratings,
-        }
+                print(
+                    f"\n{colorize(f'[WARN] Could not read cache file {os.path.basename(filepath)}: {e}', Colors.YELLOW)}"
+                )
+        params = {"fen": fen, "variant": "standard", "speeds": speeds, "ratings": ratings}
         while True:
             self.call_count += 1
             try:
@@ -176,10 +148,7 @@ def strip_colors(text):
 
 
 def colorize_ev(ev):
-    return colorize(
-        f"{ev:+.1f}",
-        Colors.GREEN if ev > 0.5 else Colors.RED if ev < -0.5 else Colors.END,
-    )
+    return colorize(f"{ev:+.1f}", Colors.GREEN if ev > 0.5 else Colors.RED if ev < -0.5 else Colors.END)
 
 
 def get_fen_from_san_sequence(moves):
@@ -237,33 +206,15 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
     if root_total == 0:
         return 0, 0, "W", [], ""
     root_ev = (root_data.get("white", 0) - root_data.get("black", 0)) / root_total * 100 if root_total else 0
-    rows.append([
-        "(start)",
-        "-",
-        f"{root_total:,}",
-        "-",
-        colorize_ev(root_ev),
-        "100.00",
-        "100.00",
-        "100.00",
-        "100.00",
-    ])
+    rows.append(["(start)", "-", f"{root_total:,}", "-", colorize_ev(root_ev), "100.00", "100.00", "100.00", "100.00"])
     prev_data, line_name = root_data, (root_data.get("opening") or {}).get("name")
     for move_san in moves:
         played_by = "W" if board.turn == chess.WHITE else "B"
         move_data = next((m for m in prev_data.get("moves", []) if m.get("san") == move_san), None)
         if not move_data:
             break
-        w, d, b = (
-            move_data.get("white", 0),
-            move_data.get("draws", 0),
-            move_data.get("black", 0),
-        )
-        parent_w, parent_d, parent_b = (
-            prev_data.get("white", 0),
-            prev_data.get("draws", 0),
-            prev_data.get("black", 0),
-        )
+        w, d, b = (move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0))
+        parent_w, parent_d, parent_b = (prev_data.get("white", 0), prev_data.get("draws", 0), prev_data.get("black", 0))
         other_stats = (parent_w - w, parent_d - d, parent_b - b)
         p_value = calculate_p_value((w, d, b), other_stats)
         if p_value < 0.001:
@@ -289,27 +240,23 @@ def print_line_reachability_stats(moves, speeds, ratings, interesting_move_san=N
             break
         ev = (current_data.get("white", 0) - current_data.get("black", 0)) / total * 100 if total else 0
         move_str = move_san + (colorize(" <-- Interesting", Colors.BLUE) if move_san == interesting_move_san else "")
-        rows.append([
-            move_str,
-            played_by,
-            f"{total:,}",
-            p_str,
-            colorize_ev(ev),
-            f"{(total / root_total * 100):.2f}",
-            f"{move_pct * 100:.2f}",
-            f"{white_wants * 100:.2f}",
-            f"{black_wants * 100:.2f}",
-        ])
+        rows.append(
+            [
+                move_str,
+                played_by,
+                f"{total:,}",
+                p_str,
+                colorize_ev(ev),
+                f"{(total / root_total * 100):.2f}",
+                f"{move_pct * 100:.2f}",
+                f"{white_wants * 100:.2f}",
+                f"{black_wants * 100:.2f}",
+            ]
+        )
         prev_data = current_data
         line_name = (current_data.get("opening") or {}).get("name")
     print(tabulate(rows, headers=headers, tablefmt="pretty"))
-    return (
-        white_wants * 100,
-        black_wants * 100,
-        "W" if board.turn == chess.WHITE else "B",
-        moves,
-        line_name,
-    )
+    return (white_wants * 100, black_wants * 100, "W" if board.turn == chess.WHITE else "B", moves, line_name)
 
 
 def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val_thresh):
@@ -317,11 +264,7 @@ def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val
     print(f"\nFinal Position (FEN): {fen}\nLichess URL: {generate_lichess_url(move_list)}")
     print(f"If White wants, this position will be reached {white_reach:.2f}% of the time.")
     print(f"If Black wants, this position will be reached {black_reach:.2f}% of the time.\n")
-    pos_w, pos_d, pos_b = (
-        data.get("white", 0),
-        data.get("draws", 0),
-        data.get("black", 0),
-    )
+    pos_w, pos_d, pos_b = (data.get("white", 0), data.get("draws", 0), data.get("black", 0))
     pos_total = pos_w + pos_d + pos_b
     pos_ev = ((pos_w - pos_b) / pos_total) if pos_total else 0
     best_move_san = None
@@ -352,16 +295,11 @@ def print_move_stats(fen, data, white_reach, black_reach, turn, move_list, p_val
             delta_ev_str = colorize(delta_ev_str, Colors.GREEN)
         elif (turn == "W" and delta_ev < -0.5) or (turn == "B" and delta_ev > 0.5):
             delta_ev_str = colorize(delta_ev_str, Colors.RED)
-        move_san_str = move.get("san", "?") + (colorize(" <-- Best", Colors.BLUE) if move.get("san") == best_move_san else "")
+        move_san_str = move.get("san", "?") + (
+            colorize(" <-- Best", Colors.BLUE) if move.get("san") == best_move_san else ""
+        )
         opening_name = (move.get("opening") or {}).get("name", "-")
-        rows.append([
-            move_san_str,
-            f"{total:,}",
-            colorize_ev(move_ev * 100),
-            delta_ev_str,
-            p_str,
-            opening_name,
-        ])
+        rows.append([move_san_str, f"{total:,}", colorize_ev(move_ev * 100), delta_ev_str, p_str, opening_name])
     print(f"Next Move Statistics for {player_str}:")
     print(tabulate(rows, headers=headers, tablefmt="pretty"))
 
@@ -384,13 +322,7 @@ def run_line_mode(args):
     if data:
         print()
         print_move_stats(
-            final_fen,
-            data,
-            white_reach,
-            black_reach,
-            final_turn,
-            args.moves,
-            DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD,
+            final_fen, data, white_reach, black_reach, final_turn, args.moves, DEFAULT_HUNTER_CONFIG.P_VALUE_THRESHOLD
         )
     return white_reach / 100, black_reach / 100, line_name
 
@@ -407,23 +339,16 @@ def find_interesting_lines_iterative(
     max_finds,
     force_refresh=False,
 ):
-    stack = [
-        (
-            initial_board.fen(),
-            initial_moves,
-            None,
-            start_white_prob,
-            start_black_prob,
-            len(initial_moves),
-        )
-    ]
+    stack = [(initial_board.fen(), initial_moves, None, start_white_prob, start_black_prob, len(initial_moves))]
     visited_nodes, found_count = 0, 0
     parent_board = chess.Board()
     if initial_moves:
         for move in initial_moves[:-1]:
             parent_board.push_san(move)
         stack[0] = (
-            stack[0][:2] + (api_manager.query(parent_board.fen(), speeds, ratings, force_refresh=force_refresh),) + stack[0][3:]
+            stack[0][:2]
+            + (api_manager.query(parent_board.fen(), speeds, ratings, force_refresh=force_refresh),)
+            + stack[0][3:]
         )
     else:
         stack[0] = (
@@ -458,30 +383,18 @@ def find_interesting_lines_iterative(
         if prev_total == 0:
             continue
         pos_ev = (prev_pos_data.get("white", 0) - prev_pos_data.get("black", 0)) / prev_total if prev_total > 0 else 0
-        parent_stats = (
-            prev_pos_data.get("white", 0),
-            prev_pos_data.get("draws", 0),
-            prev_pos_data.get("black", 0),
-        )
+        parent_stats = (prev_pos_data.get("white", 0), prev_pos_data.get("draws", 0), prev_pos_data.get("black", 0))
         sorted_moves = sorted(
             current_data.get("moves", []),
             key=lambda m: sum(m.get(k, 0) for k in ["white", "draws", "black"]),
             reverse=True,
         )
         for move_data in sorted_moves:
-            w, d, b = (
-                move_data.get("white", 0),
-                move_data.get("draws", 0),
-                move_data.get("black", 0),
-            )
+            w, d, b = (move_data.get("white", 0), move_data.get("draws", 0), move_data.get("black", 0))
             move_total = w + d + b
             if move_total < config.MIN_GAMES:
                 continue
-            other_stats = (
-                parent_stats[0] - w,
-                parent_stats[1] - d,
-                parent_stats[2] - b,
-            )
+            other_stats = (parent_stats[0] - w, parent_stats[1] - d, parent_stats[2] - b)
             p_value = calculate_p_value((w, d, b), other_stats)
             if p_value >= config.P_VALUE_THRESHOLD:
                 continue
@@ -524,18 +437,22 @@ def find_interesting_lines_iterative(
         for move_to_explore in reversed(sorted_moves[: config.BRANCH_FACTOR]):
             new_board = board.copy()
             new_board.push_san(move_to_explore["san"])
-            move_pct = sum(move_to_explore.get(k, 0) for k in ["white", "draws", "black"]) / total_games if total_games else 0
+            move_pct = (
+                sum(move_to_explore.get(k, 0) for k in ["white", "draws", "black"]) / total_games if total_games else 0
+            )
             new_white_prob, new_black_prob = (
                 (white_prob, black_prob * move_pct) if is_white_turn else (white_prob * move_pct, black_prob)
             )
-            stack.append((
-                new_board.fen(),
-                move_history + [move_to_explore["san"]],
-                current_data,
-                new_white_prob,
-                new_black_prob,
-                depth + 1,
-            ))
+            stack.append(
+                (
+                    new_board.fen(),
+                    move_history + [move_to_explore["san"]],
+                    current_data,
+                    new_white_prob,
+                    new_black_prob,
+                    depth + 1,
+                )
+            )
 
 
 def run_hunt_mode(args):
@@ -552,10 +469,7 @@ def run_hunt_mode(args):
     if args.moves:
         start_white_prob, start_black_prob, line_name = run_line_mode(
             argparse.Namespace(
-                moves=args.moves,
-                speeds=args.speeds,
-                ratings=args.ratings,
-                force_refresh=args.force_refresh,
+                moves=args.moves, speeds=args.speeds, ratings=args.ratings, force_refresh=args.force_refresh
             )
         )
         for move in args.moves:
@@ -595,7 +509,9 @@ def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
     if root_total_games == 0:
         root_total_games = 1
 
-    root_ev = (root_data.get("white", 0) - root_data.get("black", 0)) / root_total_games * 100 if root_total_games > 0 else 0
+    root_ev = (
+        (root_data.get("white", 0) - root_data.get("black", 0)) / root_total_games * 100 if root_total_games > 0 else 0
+    )
 
     prev_data = root_data
     for move_san in moves:
@@ -626,14 +542,7 @@ def get_stats_for_line(moves, speed, rating_bracket, force_refresh=False):
     final_pos_total_games = sum(final_data.get(k, 0) for k in ["white", "draws", "black"])
     popularity = final_pos_total_games / root_total_games if root_total_games > 0 else 0
     if final_pos_total_games == 0:
-        return (
-            0,
-            reachability * 100,
-            popularity * 100,
-            root_ev,
-            line_name,
-            forcing_player,
-        )
+        return (0, reachability * 100, popularity * 100, root_ev, line_name, forcing_player)
     ev = (
         (final_data.get("white", 0) - final_data.get("black", 0)) / final_pos_total_games * 100
         if final_pos_total_games > 0
@@ -658,7 +567,9 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
         ELO_FACTOR = 6
 
         for bucket in PLOT_ELO_BRACKETS:
-            ev, r_, p_, root_ev, name, player = get_stats_for_line(moves, speed, str(bucket), force_refresh=force_refresh)
+            ev, r_, p_, root_ev, name, player = get_stats_for_line(
+                moves, speed, str(bucket), force_refresh=force_refresh
+            )
             print(
                 f"{colorize(f'  [{bucket:>4}]', Colors.GRAY)} EV: {colorize_ev(ev)} | Reach: {r_:.2f}% | Pop: {p_:.2f}% | Base"
                 f" EV: {colorize_ev(root_ev)}"
@@ -673,17 +584,19 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
             if name not in ("Unknown Opening", "N/A"):
                 final_name = name
 
-        all_stats.append({
-            "moves": moves,
-            "move_string": move_str,
-            "name": final_name,
-            "forcing_player": forcing_player,
-            "elo_gain": elo_gain,
-            "base_gain": base_gain,
-            "reach": reach,
-            "pop": pop,
-            "theory": theory,
-        })
+        all_stats.append(
+            {
+                "moves": moves,
+                "move_string": move_str,
+                "name": final_name,
+                "forcing_player": forcing_player,
+                "elo_gain": elo_gain,
+                "base_gain": base_gain,
+                "reach": reach,
+                "pop": pop,
+                "theory": theory,
+            }
+        )
     return all_stats
 
 
@@ -761,14 +674,7 @@ def generate_plots(stats_data, speed, outdir):
     centres = [(a + b) / 2 for a, b in zip(buckets[:-1], buckets[1:])] + [2600]
     tick_labels = [str(int(c)) if c != 2600 else "2500+" for c in centres]
 
-    C = dict(
-        bg="#121212",
-        grid="#444",
-        txt="#e9e9e9",
-        cap="#c7c7c7",
-        base="#b0b0b0",
-        arrow="#efd545",
-    )
+    C = dict(bg="#121212", grid="#444", txt="#e9e9e9", cap="#c7c7c7", base="#b0b0b0", arrow="#efd545")
     charts = [
         {
             "title": "Performance",
@@ -835,14 +741,7 @@ def generate_plots(stats_data, speed, outdir):
                 box2.axis("off")
 
             ax_header.text(
-                0.5,
-                DUAL_CHART_TITLE_Y,
-                title,
-                color=color,
-                fontsize=22,
-                weight="bold",
-                ha="center",
-                va="center",
+                0.5, DUAL_CHART_TITLE_Y, title, color=color, fontsize=22, weight="bold", ha="center", va="center"
             )
         else:  # Use the 'single' layout for both 'single' and 'compare_speeds' modes
             ax_header.text(
@@ -967,10 +866,7 @@ def generate_plots(stats_data, speed, outdir):
             ax_main.annotate(
                 "above this line means better than average",
                 xy=(centres[mid], base_gain_data[mid]),
-                xytext=(
-                    centres[mid],
-                    ax_main.get_ylim()[0] + 0.45 * (ax_main.get_ylim()[1] - ax_main.get_ylim()[0]),
-                ),
+                xytext=(centres[mid], ax_main.get_ylim()[0] + 0.45 * (ax_main.get_ylim()[1] - ax_main.get_ylim()[0])),
                 arrowprops=dict(
                     arrowstyle="-|>",
                     color=C["arrow"],
@@ -985,19 +881,10 @@ def generate_plots(stats_data, speed, outdir):
         # Only show a legend if there's something to compare
         if plot_mode != "single":
             ax_main.legend(
-                facecolor="#222",
-                edgecolor="#555",
-                fontsize=13,
-                labelcolor=C["txt"],
-                loc="lower left",
-                fancybox=True,
+                facecolor="#222", edgecolor="#555", fontsize=13, labelcolor=C["txt"], loc="lower left", fancybox=True
             )
 
-        fig.supxlabel(
-            "Created with open source tool WickedLines, join the project!",
-            color=C["cap"],
-            fontsize=12,
-        )
+        fig.supxlabel("Created with open source tool WickedLines, join the project!", color=C["cap"], fontsize=12)
         save(fig, chart_info["key"], filename_prefix)
 
     print(f"\nPNG files written to {outdir}")
@@ -1047,27 +934,19 @@ def run_compare_mode(args):
 
 def run_batch_plot_mode(args):
     total_openings = len(BATCH_OPENINGS)
-    print(
-        colorize(
-            f"Starting batch plot generation for {total_openings} openings...",
-            Colors.YELLOW,
-        )
-    )
+    print(colorize(f"Starting batch plot generation for {total_openings} openings...", Colors.YELLOW))
     print(f"Plots will be saved to the '{os.path.join(os.getcwd(), 'plots')}' directory.")
 
     for i, opening in enumerate(BATCH_OPENINGS):
         print(
             colorize(
-                f"\n({i + 1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})",
-                Colors.BLUE,
+                f"\n({i + 1}/{total_openings}) Generating plot for: {opening['name']} ({opening['moves']})", Colors.BLUE
             )
         )
 
         # We now pass the force_refresh argument from the main command down to the individual plot job.
         plot_args = argparse.Namespace(
-            moves=opening["moves"].split(),
-            speed=args.speed,
-            force_refresh=args.force_refresh,
+            moves=opening["moves"].split(), speed=args.speed, force_refresh=args.force_refresh
         )
 
         try:
@@ -1205,10 +1084,7 @@ def signal_handler(sig, frame):
     print(colorize("\n\nHunt interrupted by user.", Colors.YELLOW))
     if "hunt_start_time" in globals() and "interrupted_args" in globals() and found_lines:
         print_final_summary(
-            interrupted_args,
-            DEFAULT_HUNTER_CONFIG,
-            time.time() - hunt_start_time,
-            interrupted_line_name,
+            interrupted_args, DEFAULT_HUNTER_CONFIG, time.time() - hunt_start_time, interrupted_line_name
         )
     print(f"\nTotal API calls made during this session: {api_manager.call_count}")
     sys.exit(0)
@@ -1244,18 +1120,12 @@ def main():
         ),
     )
     parser_line.add_argument(
-        "--force-refresh",
-        action="store_true",
-        help="Ignore local cache and fetch fresh data from the API.",
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
     )
     parser_line.set_defaults(func=run_line_mode)
 
     parser_hunt = subparsers.add_parser("hunt", help="Recursively search for interesting opportunities and blunders.")
-    parser_hunt.add_argument(
-        "moves",
-        nargs="*",
-        help="Optional initial move sequence to start the hunt from.",
-    )
+    parser_hunt.add_argument("moves", nargs="*", help="Optional initial move sequence to start the hunt from.")
     parser_hunt.add_argument(
         "--speeds",
         default="blitz,rapid,classical",
@@ -1271,15 +1141,9 @@ def main():
             "Default: 1600"
         ),
     )
+    parser_hunt.add_argument("--max-finds", type=int, help="Stop the search after finding N interesting lines.")
     parser_hunt.add_argument(
-        "--max-finds",
-        type=int,
-        help="Stop the search after finding N interesting lines.",
-    )
-    parser_hunt.add_argument(
-        "--force-refresh",
-        action="store_true",
-        help="Ignore local cache and fetch fresh data from the API.",
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
     )
     parser_hunt.set_defaults(func=run_hunt_mode)
 
@@ -1291,17 +1155,13 @@ def main():
         help="A single or comma-separated list of time controls for the plot (e.g., blitz,rapid). Default: rapid.",
     )
     parser_plot.add_argument(
-        "--force-refresh",
-        action="store_true",
-        help="Ignore local cache and fetch fresh data from the API.",
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
     )
     parser_plot.set_defaults(func=run_plot_mode)
 
     parser_compare = subparsers.add_parser("compare", help="Plot multiple openings on the same charts for comparison.")
     parser_compare.add_argument(
-        "move_strings",
-        nargs="+",
-        help='Quoted, space-separated strings of moves to compare (e.g., "e4 c5" "d4 d5").',
+        "move_strings", nargs="+", help='Quoted, space-separated strings of moves to compare (e.g., "e4 c5" "d4 d5").'
     )
     parser_compare.add_argument(
         "--speed",
@@ -1310,13 +1170,13 @@ def main():
         help="A single, fixed time control for the plot. Default: rapid.",
     )
     parser_compare.add_argument(
-        "--force-refresh",
-        action="store_true",
-        help="Ignore local cache and fetch fresh data from the API.",
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
     )
     parser_compare.set_defaults(func=run_compare_mode)
 
-    parser_batchplot = subparsers.add_parser("batchplot", help="Generate plots for a predefined list of major openings.")
+    parser_batchplot = subparsers.add_parser(
+        "batchplot", help="Generate plots for a predefined list of major openings."
+    )
     parser_batchplot.add_argument(
         "--speed",
         default="rapid",
@@ -1324,9 +1184,7 @@ def main():
         help="A single, fixed time control for all plots. Default: rapid.",
     )
     parser_batchplot.add_argument(
-        "--force-refresh",
-        action="store_true",
-        help="Ignore local cache and fetch fresh data from the API.",
+        "--force-refresh", action="store_true", help="Ignore local cache and fetch fresh data from the API."
     )
     parser_batchplot.set_defaults(func=run_batch_plot_mode)
 
