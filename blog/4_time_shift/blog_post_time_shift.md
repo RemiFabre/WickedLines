@@ -9,6 +9,11 @@ https://github.com/RemiFabre/WickedLines
 
 The newest feature allows for a direct comparison of an opening's performance across different time controls: Blitz, Rapid, and Classical. For each opening, we get four plots that tell a different part of the story.
 
+![plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_performance.png](plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_performance.png)
+![plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_popularity.png](plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_popularity.png)
+![plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_reachability.png](plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_reachability.png)
+![plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_surprise.png](plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_surprise.png)
+
 The charts were generated for the following openings:
 
 #### 1.e4 Openings
@@ -44,22 +49,15 @@ The charts were generated for the following openings:
 
 ## How to Read the Graphs:
 
-![plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_performance.png](plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_performance.png)
-![plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_popularity.png](plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_popularity.png)
-![plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_reachability.png](plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_reachability.png)
-![plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_surprise.png](plots/e4_c6_blitz_rapid_classical/e4_c6_blitz_rapid_classical_surprise.png)
-
-**Note:** I removed the 2500+ Elo bracket because it had a low amount of games (especially in classical) and the values often were non-significant statistically and extreme in value.
-
-**Note:** The charts are seen from the perspective of the player that made the last move of the opening. So for the Caro-Kann (e4 c6), high values are good for Black. For the English (c4) high values are good for White.
-
-
 *   **Expected Elo Gain / 100 Games**: The expected rating point change from playing this line 100 times.
 *   **Average White Elo Gain**: A baseline showing average performance from move 1.
 *   **Reachability %**: Your chance to get this opening on the board if you try.
 *   **Popularity %**: How often this opening is seen in all games.
 *   **Theory Advantage**: Reachability / Popularity. A measure of surprise value and preparation efficiency.
 
+**Note:** I removed the 2500+ Elo bracket because it had a low amount of games (especially in classical) and the values often were non-significant statistically and extreme in value.
+
+**Note:** The charts are seen from the perspective of the player that made the last move of the opening. So for the Caro-Kann (e4 c6), high values are good for Black. For the English (c4) high values are good for White.
 
 
 
@@ -67,9 +65,8 @@ The charts were generated for the following openings:
 
 ## My Prediction (and Why It Was Wrong)
 
-My initial hypothesis was straightforward: a game between stronger players with less time should be somewhat similar to a game between weaker players with more time. I expected the discussion to be about:
-- Diminishing returns for each extra minute of time
-- Intuition vs calculation
+My initial hypothesis was straightforward: a game between stronger players with less time should be somewhat similar to a game between weaker players with more time. I expected the discussion to be about diminishing returns for each extra minute of time and the trade-off between intuition vs calculation.
+
 
 Graphically, I expected to see a simple shift along the x-axis. I thought I could take a performance curve from Blitz, slide it to the left, and have it roughly match the curve for Rapid. Slide it again, and it would match Classical.
 
