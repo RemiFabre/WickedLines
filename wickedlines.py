@@ -166,8 +166,11 @@ def generate_lichess_url(moves):
 
 def calculate_p_value(move_stats, other_stats):
     observed = [list(move_stats), list(other_stats)]
+    # Empty contrast bag means no other moves were observed from this
+    # position, so there is no evidence of difference — return 1.0, not 0.0
+    # (which would read as "highly significant").
     if sum(observed[1]) <= 0:
-        return 0.0
+        return 1.0
     try:
         _, p, _, _ = chi2_contingency(observed)
         return p
