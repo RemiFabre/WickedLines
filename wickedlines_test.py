@@ -17,7 +17,6 @@ import pytest
 
 import wickedlines_stats as ws
 
-
 # ---------------------------------------------------------------------------
 # ev / ev_pp / totals
 # ---------------------------------------------------------------------------
@@ -308,17 +307,7 @@ def _wickedlines_inline_ev(w: int, d: int, b: int) -> float:
     return (w - b) / total * 100
 
 
-@pytest.mark.parametrize(
-    "stats",
-    [
-        (0, 0, 0),
-        (10, 0, 0),
-        (0, 0, 10),
-        (40, 20, 40),
-        (1234, 567, 890),
-        (1, 0, 0),
-    ],
-)
+@pytest.mark.parametrize("stats", [(0, 0, 0), (10, 0, 0), (0, 0, 10), (40, 20, 40), (1234, 567, 890), (1, 0, 0)])
 def test_ev_pp_matches_inline_formula(stats):
     assert ws.ev_pp(stats) == pytest.approx(_wickedlines_inline_ev(*stats))
 
@@ -328,10 +317,7 @@ def test_kings_gambit_matches_inline_pipeline():
     import json
     import os
 
-    path = os.path.join(
-        ".wickedlines_cache",
-        "rnbqkbnr_pppp1ppp_8_4p3_4PP2_8_PPPP2PP_RNBQKBNR b KQkq - 0 2__blitz__1600.json",
-    )
+    path = os.path.join(".wickedlines_cache", "rnbqkbnr_pppp1ppp_8_4p3_4PP2_8_PPPP2PP_RNBQKBNR b KQkq - 0 2__blitz__1600.json")
     if not os.path.exists(path):
         pytest.skip("cached KG blitz/1600 payload not present")
     with open(path) as f:

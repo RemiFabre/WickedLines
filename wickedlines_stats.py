@@ -138,9 +138,7 @@ def forcing_player(num_moves_played: int) -> str:
     return "White" if num_moves_played % 2 == 1 else "Black"
 
 
-def reachability_of_line(
-    moves_played_by: Sequence[str], move_fractions: Sequence[float]
-) -> Tuple[float, float]:
+def reachability_of_line(moves_played_by: Sequence[str], move_fractions: Sequence[float]) -> Tuple[float, float]:
     """Walk a sequence of plies and return (white_wants, black_wants).
 
     `moves_played_by[i]` is "W" or "B"; `move_fractions[i]` is the fraction
@@ -194,9 +192,7 @@ def chi2_p_value(move_stats: Sequence[int], other_stats: Sequence[int]) -> float
 # ---------------------------------------------------------------------------
 
 
-def expected_elo_gain_per_100(
-    reach_prob: float, delta_ev: float, factor: float = DEFAULT_ELO_PER_EV_POINT
-) -> float:
+def expected_elo_gain_per_100(reach_prob: float, delta_ev: float, factor: float = DEFAULT_ELO_PER_EV_POINT) -> float:
     """Hunt mode's "Elo gain over 100 games" headline number.
 
     `reach_prob` is in [0, 1]; `delta_ev` is in the ×100 scale. The sign of

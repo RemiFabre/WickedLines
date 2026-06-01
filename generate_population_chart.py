@@ -8,6 +8,7 @@ dark theme of the per-opening charts so the README looks consistent.
 Run from the repo root:
     python generate_population_chart.py
 """
+
 from __future__ import annotations
 
 import json
@@ -73,11 +74,7 @@ def main() -> None:
         print("Missing cache files for the root position:", file=sys.stderr)
         for m in missing:
             print(f"  - {m}", file=sys.stderr)
-        print(
-            "Run `python wickedlines.py plot e4 --speeds blitz,rapid,classical` once "
-            "to seed the cache.",
-            file=sys.stderr,
-        )
+        print("Run `python wickedlines.py plot e4 --speeds blitz,rapid,classical` once " "to seed the cache.", file=sys.stderr)
         sys.exit(1)
 
     fig, ax = plt.subplots(figsize=(10, 5.5), dpi=180, facecolor=C["bg"], constrained_layout=True)
@@ -99,21 +96,10 @@ def main() -> None:
     ax.set_xlabel("Average rating of the two players (Lichess)", color=C["txt"], fontsize=13, labelpad=10)
     ax.set_ylabel("Games in the Lichess explorer (log scale)", color=C["txt"], fontsize=13, labelpad=10)
     ax.set_title(
-        "Lichess opening explorer — game volume by speed and rating",
-        color=C["txt"],
-        fontsize=15,
-        weight="bold",
-        pad=14,
+        "Lichess opening explorer — game volume by speed and rating", color=C["txt"], fontsize=15, weight="bold", pad=14
     )
 
-    leg = ax.legend(
-        facecolor="#1c1c1c",
-        edgecolor=C["grid"],
-        fontsize=12,
-        labelcolor=C["txt"],
-        loc="lower left",
-        frameon=True,
-    )
+    leg = ax.legend(facecolor="#1c1c1c", edgecolor=C["grid"], fontsize=12, labelcolor=C["txt"], loc="lower left", frameon=True)
     leg.get_frame().set_linewidth(0.6)
 
     fig.text(
