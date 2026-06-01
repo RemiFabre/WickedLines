@@ -26,9 +26,11 @@ DEFAULT_HUNTER_CONFIG = HunterConfig(
     MIN_REACH_PCT=1.0,
     DELTA_EV_THRESHOLD=5.0,
     P_VALUE_THRESHOLD=0.05,
+    # MAX_DEPTH is *additional* plies beyond the initial move sequence.
     MAX_DEPTH=6,
     BRANCH_FACTOR=4,
-    ELO_PER_POINT=8,
+    # K/2 with Lichess Glicko-2 K ≈ 15. Used for both hunt and plot Elo proxies.
+    ELO_PER_POINT=7.5,
 )
 # Align with Lichess API enum
 # PLOT_ELO_BRACKETS = ["0", "1000", "1200", "1400", "1600", "1800", "2000", "2200", "2500"]
@@ -344,7 +346,8 @@ def find_interesting_lines_iterative(
         total_games = sum(current_data.get(k, 0) for k in ["white", "draws", "black"])
         is_white_turn = board.turn == chess.WHITE
         reach_prob = white_prob if is_white_turn else black_prob
-        if total_games < config.MIN_GAMES or depth >= config.MAX_DEPTH or reach_prob * 100 < config.MIN_REACH_PCT:
+        plies_explored = depth - len(initial_moves)
+        if total_games < config.MIN_GAMES or plies_explored >= config.MAX_DEPTH or reach_prob * 100 < config.MIN_REACH_PCT:
             continue
         prev_total = sum(prev_pos_data.get(k, 0) for k in ["white", "draws", "black"])
         if prev_total == 0:
@@ -523,7 +526,7 @@ def fetch_stats_for_lines(move_strings, speed, force_refresh=False):
 
         elo_gain, base_gain, reach, pop, theory = [], [], [], [], []
         final_name, forcing_player = "Unknown Opening", "White"
-        ELO_FACTOR = 6
+        ELO_FACTOR = DEFAULT_HUNTER_CONFIG.ELO_PER_POINT
 
         for bucket in PLOT_ELO_BRACKETS:
             ev, r_, p_, root_ev, name, player = get_stats_for_line(moves, speed, str(bucket), force_refresh=force_refresh)
@@ -635,9 +638,13 @@ def generate_plots(stats_data, speed, outdir):
         # Special case for the 2500+ open-ended bucket
         centres.append(2600)
         tick_labels = [str(int(c)) for c in centres[:-1]] + ["2500+"]
+    elif buckets and buckets[-1] == 2200:
+        # Lichess's 2200 group is 2200-2499 (width 300, not 200), so its
+        # true midpoint is 2350, not 2300.
+        centres.append(2350)
+        tick_labels = [str(int(c)) for c in centres]
     elif buckets:
-        # Standard case for the last bucket (e.g., 2200-2399)
-        # Assume a 200-point width, so the center is start + 100
+        # General fallback: assume a 200-point-wide last bucket.
         centres.append(buckets[-1] + 100)
         tick_labels = [str(int(c)) for c in centres]
     else:
