@@ -320,8 +320,13 @@ def test_kings_gambit_matches_inline_pipeline():
     path = os.path.join(".wickedlines_cache", "rnbqkbnr_pppp1ppp_8_4p3_4PP2_8_PPPP2PP_RNBQKBNR b KQkq - 0 2__blitz__1600.json")
     if not os.path.exists(path):
         pytest.skip("cached KG blitz/1600 payload not present")
-    with open(path) as f:
-        data = json.load(f)
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        # In environments where the cache file is a Git LFS pointer rather
+        # than the real JSON (e.g. CI without `lfs: true`), skip cleanly.
+        pytest.skip("cached KG payload is an LFS pointer, not real JSON")
     inline = _wickedlines_inline_ev(*ws.extract_wdb(data))
     helper = ws.ev_pp(ws.extract_wdb(data))
     assert helper == pytest.approx(inline)
